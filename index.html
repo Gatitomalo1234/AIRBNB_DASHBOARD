@@ -1,0 +1,3403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Airbnb - APTO URBAN 960</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --font-display: "Fraunces", ui-serif, Georgia, serif;
+      --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+      /* Cinematic luxury palette */
+      --ink: #F1E7D0;
+      --paper: #050505;
+      --paper-2: #0B0B0A;
+      --line: rgba(241, 231, 208, 0.06);
+
+      --primary: #A8844A;
+      --primary-dark: #7A5636;
+      --primary-light: rgba(168, 132, 74, 0.16);
+      --accent: #C6A06A;
+
+      --success: #4ade80;
+      --danger: #f87171;
+
+      --neutral-50:  rgba(255, 255, 255, 0.03);
+      --neutral-100: rgba(255, 255, 255, 0.05);
+      --neutral-200: rgba(255, 255, 255, 0.08);
+      --neutral-300: rgba(255, 255, 255, 0.12);
+      --neutral-400: rgba(255, 255, 255, 0.28);
+      --neutral-500: rgba(255, 255, 255, 0.48);
+      --neutral-600: rgba(255, 255, 255, 0.60);
+      --neutral-700: rgba(255, 255, 255, 0.75);
+      --neutral-800: rgba(255, 255, 255, 0.88);
+      --neutral-900: var(--ink);
+
+      --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.45);
+      --shadow-md: 0 20px 60px rgba(0, 0, 0, 0.65);
+      --radius: 18px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--neutral-900);
+      color-scheme: dark;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Fondo base: solo negro puro, sin capas que apaguen los colores ── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: #050505;
+    }
+
+    /* ── WebGL aurora canvas (Monopo-style) ─────────────────────── */
+    .aurora-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.92;
+      mix-blend-mode: screen;
+      transform: translateZ(0);
+    }
+
+    /* subtle film grain */
+    .film-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      filter: url(#grainFilter);
+      background: rgba(255,255,255,0.08);
+      animation: grain-jitter 1.6s steps(2, end) infinite;
+    }
+    @keyframes grain-jitter {
+      0% { transform: translate3d(0,0,0); }
+      25% { transform: translate3d(-1.5%, 1%, 0); }
+      50% { transform: translate3d(1%, -1.25%, 0); }
+      75% { transform: translate3d(-0.75%, -0.5%, 0); }
+      100% { transform: translate3d(0,0,0); }
+    }
+
+    /* ── Mancha orgánica: deriva lenta y suave ──────────────────── */
+    @keyframes organic-drift-1 {
+      0%   { transform: translate(0px,    0px)   scale(1)    translateZ(0); }
+      20%  { transform: translate(70px,   50px)  scale(1.05) translateZ(0); }
+      45%  { transform: translate(30px,  120px)  scale(0.97) translateZ(0); }
+      70%  { transform: translate(-60px,  60px)  scale(1.06) translateZ(0); }
+      100% { transform: translate(0px,    0px)   scale(1)    translateZ(0); }
+    }
+    @keyframes organic-drift-2 {
+      0%   { transform: translate(0px,   0px)   scale(1)    translateZ(0); }
+      30%  { transform: translate(-80px, 70px)  scale(1.08) translateZ(0); }
+      60%  { transform: translate(50px,  -50px) scale(0.94) translateZ(0); }
+      100% { transform: translate(0px,   0px)   scale(1)    translateZ(0); }
+    }
+	    @keyframes organic-drift-3 {
+      0%   { transform: translate(0px,   0px)   scale(1)    translateZ(0); }
+      35%  { transform: translate(55px, -90px)  scale(1.04) translateZ(0); }
+      75%  { transform: translate(-45px, 40px)  scale(0.96) translateZ(0); }
+      100% { transform: translate(0px,   0px)   scale(1)    translateZ(0); }
+    }
+	    @keyframes sphere-float {
+	      0%, 100% { transform: translateY(-50%) translateZ(0) scale(1); }
+	      50%       { transform: translateY(calc(-50% - 22px)) translateZ(0) scale(1.018); }
+	    }
+
+	    /* ── Mancha ambulante (inspiración: monopo.vn) ─────────────── */
+	    @keyframes stain-wander {
+	      0%   { transform: translate3d(-22vw, -14vh, 0) scale(0.92) rotate(0deg);   filter: blur(96px)  saturate(145%) hue-rotate(0deg)  brightness(1.02); opacity: 0.70; }
+	      16%  { transform: translate3d(26vw,   8vh, 0)  scale(1.08) rotate(18deg);  filter: blur(92px)  saturate(165%) hue-rotate(10deg) brightness(1.08); opacity: 0.86; }
+	      34%  { transform: translate3d(14vw,  36vh, 0)  scale(0.98) rotate(-14deg); filter: blur(102px) saturate(150%) hue-rotate(-8deg) brightness(1.00); opacity: 0.74; }
+	      54%  { transform: translate3d(-30vw, 30vh, 0)  scale(1.16) rotate(28deg);  filter: blur(88px)  saturate(175%) hue-rotate(16deg) brightness(1.10); opacity: 0.92; }
+	      76%  { transform: translate3d(-10vw, -10vh, 0) scale(1.03) rotate(-22deg); filter: blur(98px)  saturate(155%) hue-rotate(-14deg) brightness(1.04); opacity: 0.80; }
+	      100% { transform: translate3d(-22vw, -14vh, 0) scale(0.92) rotate(0deg);   filter: blur(96px)  saturate(145%) hue-rotate(0deg)  brightness(1.02); opacity: 0.70; }
+	    }
+	    .wander-stain {
+	      position: absolute;
+	      width: 140vmax;
+	      height: 140vmax;
+	      left: 50%;
+	      top: 50%;
+	      transform: translate3d(-18vw, -10vh, 0) scale(0.95);
+	      border-radius: 50%;
+	      filter: blur(96px) saturate(150%);
+	      opacity: 0.65;
+	      background:
+	        radial-gradient(ellipse at 40% 45%,
+	          rgba(168, 132, 74, 0.22) 0%,
+	          rgba(122, 86, 54, 0.16) 22%,
+	          rgba(59, 70, 55, 0.10) 48%,
+	          transparent 72%),
+	        radial-gradient(ellipse at 62% 52%,
+	          rgba(74, 86, 69, 0.18) 0%,
+	          rgba(43, 51, 40, 0.12) 42%,
+	          transparent 74%),
+	        radial-gradient(ellipse at 44% 72%,
+	          rgba(122, 86, 54, 0.14) 0%,
+	          rgba(168, 132, 74, 0.08) 44%,
+	          transparent 76%);
+	      mix-blend-mode: screen;
+	      will-change: transform, opacity;
+	      animation: stain-wander 26s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+	    }
+
+	    /* ── Fluid background (true “alive” waves) ─────────────────── */
+	    .fluid-bg {
+	      position: fixed;
+	      inset: 0;
+	      width: 100%;
+	      height: 100%;
+	      z-index: 0;
+	      pointer-events: none;
+	      opacity: 0.22;
+	      mix-blend-mode: screen;
+	      filter: blur(18px) saturate(118%) contrast(116%) brightness(0.72);
+	      transform: translateZ(0);
+	    }
+
+	    @media (prefers-reduced-motion: reduce) {
+	      .fluid-bg { display: none; }
+	    }
+    @keyframes sphere-silk {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes halo-breathe {
+      0%, 100% { opacity: 0.30; transform: translateY(-50%) translateZ(0) scale(1); }
+      50%       { opacity: 0.60; transform: translateY(calc(-50% - 16px)) translateZ(0) scale(1.025); }
+    }
+		    @keyframes sphere-entrance {
+		      0% {
+		        opacity: 0;
+		        top: 50%;
+		        right: 50%;
+		        transform: translate(50%, -50%) translateZ(0) scale(0.18);
+		        filter: blur(2px);
+		      }
+		      12% { opacity: 1; filter: blur(0); }
+		      72% { top: 40%; right: -12vmin; transform: translateY(-50%) translateZ(0) scale(1.05); }
+		      86% { top: 40%; right: -12vmin; transform: translateY(-50%) translateZ(0) scale(0.99); }
+		      100%{ opacity: 1; top: 40%; right: -12vmin; transform: translateY(-50%) translateZ(0) scale(1); filter: blur(0); }
+		    }
+    @keyframes sphere-click-glow {
+      0%   { box-shadow: 0 0 0 1px rgba(168,132,74,0.08), 0 0 80px rgba(122,86,54,0.12), 0 0 220px rgba(122,86,54,0.06), inset 0 0 90px rgba(0,0,0,0.32), inset 0 -30px 80px rgba(0,0,0,0.28), inset 0 4px 16px rgba(168,132,74,0.06); }
+      35%  { box-shadow: 0 0 0 2px rgba(168,132,74,0.18), 0 0 140px rgba(168,132,74,0.28), 0 0 320px rgba(122,86,54,0.14), inset 0 0 90px rgba(0,0,0,0.32), inset 0 -30px 80px rgba(0,0,0,0.28), inset 0 4px 22px rgba(168,132,74,0.10); }
+      100% { box-shadow: 0 0 0 1px rgba(168,132,74,0.08), 0 0 80px rgba(122,86,54,0.12), 0 0 220px rgba(122,86,54,0.06), inset 0 0 90px rgba(0,0,0,0.32), inset 0 -30px 80px rgba(0,0,0,0.28), inset 0 4px 16px rgba(168,132,74,0.06); }
+    }
+
+	    .blob-container {
+	      position: fixed;
+	      inset: 0;
+	      pointer-events: none;
+	      z-index: 0;
+	      overflow: hidden;
+	      transform: translateZ(0);
+	      transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+	    }
+    .blob-container.bg-dimmed {
+      opacity: 0.18;
+    }
+
+    /* ── Esfera de vidrio — refracción real, doble especular ────── */
+	    .sphere {
+	      position: absolute;
+	      width: 96vmin;
+	      height: 96vmin;
+	      /* Start centered; sphere-entrance moves it to final position */
+	      top: 50%;
+	      right: 50%;
+	      transform: translate(50%, -50%) translateZ(0);
+	      border-radius: 50%;
+	      cursor: pointer;
+	      /* allow shader-sphere to do most of the “refraction”; keep DOM sphere subtle */
+	      opacity: 0;
+	      background:
+        /* Vignette de borde: oscurece el interior perimetral para simular la curvatura del vidrio */
+        radial-gradient(ellipse 100% 100% at 50% 50%,
+          transparent 55%,
+          rgba(0,0,0,0.38) 82%,
+          rgba(0,0,0,0.55) 100%),
+	        rgba(255,255,255,0.010);
+      /* blur(5px): suficiente para distorsión óptica en el borde sin oscurecer el interior */
+      backdrop-filter: blur(6px) saturate(140%) brightness(0.82) hue-rotate(6deg);
+      -webkit-backdrop-filter: blur(6px) saturate(140%) brightness(0.82) hue-rotate(6deg);
+	      border: 1px solid rgba(168,132,74,0.14);
+	      box-shadow:
+        0 0 0 2px rgba(168,132,74,0.06),
+	        0 0 80px  rgba(122,86,54,0.12),
+	        0 0 200px rgba(122,86,54,0.06),
+	        inset 0 0 0 5px rgba(0,0,0,0.42),
+        inset 0 0 110px rgba(0,0,0,0.32),
+        inset 0 -40px 90px rgba(0,0,0,0.28),
+	        inset 0 5px 16px rgba(168,132,74,0.06);
+	      will-change: transform, opacity, top, right, filter;
+		      animation:
+		        sphere-entrance 5.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
+		        sphere-float 16s ease-in-out 5.6s infinite;
+	      overflow: hidden;
+	    }
+
+	    /* liquid glass diffusion + internal motion */
+	    .sphere::before {
+	      animation: sphere-internal-drift 18s ease-in-out infinite;
+	    }
+	    @keyframes sphere-internal-drift {
+	      0%   { transform: translate3d(-2%, -1%, 0) scale(1.02); opacity: 0.95; filter: blur(0px); }
+	      45%  { transform: translate3d(2%,  1.5%,0) scale(1.01); opacity: 1.00; filter: blur(0.2px); }
+	      100% { transform: translate3d(-2%, -1%, 0) scale(1.02); opacity: 0.95; filter: blur(0px); }
+	    }
+
+	    .sphere::after {
+	      /* soften rim; internal diffusion edge */
+	      inset: 3px;
+	      border: 1px solid rgba(255,255,255,0.07);
+	      box-shadow: inset 0 0 38px rgba(255,255,255,0.05);
+	    }
+
+	    /* extra refractive caustics layer */
+	    .sphere .sphere-caustics { display: none; } /* placeholder for future */
+
+    .sphere.sphere-lit {
+      animation: sphere-float 14s ease-in-out infinite, sphere-click-glow 0.7s ease-out;
+    }
+
+    /* Especular principal — arriba izquierda: luz directa */
+    .sphere::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        /* Highlight primario: punto apagado arriba-izquierda — tono cálido, no blanco */
+        radial-gradient(ellipse 32% 18% at 34% 18%,
+          rgba(241,231,208,0.14) 0%,
+          rgba(168,132,74,0.05) 55%,
+          transparent 100%),
+        /* Highlight secundario: bronce suave abajo-derecha */
+        radial-gradient(ellipse 20% 12% at 70% 80%,
+          rgba(155,116,77,0.14) 0%,
+          rgba(122,86,54,0.04) 60%,
+          transparent 100%);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* Thin rim interior luminoso: total internal reflection en el borde */
+    .sphere::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.09);
+      pointer-events: none;
+    }
+
+    /* Halo exterior */
+	    .sphere-halo {
+	      position: absolute;
+	      width: 112vmin;
+	      height: 112vmin;
+	      /* Start centered; sphere-entrance moves it to final position */
+	      top: 50%;
+	      right: 50%;
+	      transform: translate(50%, -50%) translateZ(0);
+	      border-radius: 50%;
+	      border: 1px solid rgba(166,126,78,0.08);
+	      box-shadow: 0 0 80px rgba(166,126,78,0.05);
+	      animation: halo-breathe 12s ease-in-out infinite;
+	      pointer-events: none;
+	      opacity: 0;
+	      animation: sphere-entrance 5.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both, halo-breathe 14s ease-in-out 5.6s infinite;
+	    }
+
+	    /* ── Glass wash during intro: blur the whole scene ─────────── */
+	    @keyframes glass-wash-fade {
+	      0%   { opacity: 1; }
+	      70%  { opacity: 1; }
+	      100% { opacity: 0; }
+	    }
+	    .glass-wash {
+	      position: fixed;
+	      inset: 0;
+	      z-index: 2;
+	      pointer-events: none;
+	      opacity: 0;
+	      background: rgba(13, 13, 13, 0.25);
+	      backdrop-filter: url("#container-glass") blur(22px) saturate(160%) brightness(0.92);
+	      -webkit-backdrop-filter: url("#container-glass") blur(22px) saturate(160%) brightness(0.92);
+	      mix-blend-mode: normal;
+	    }
+	    body.intro-playing .glass-wash {
+	      opacity: 1;
+	      animation: glass-wash-fade 3.7s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+	    }
+
+    /* ── Blobs de color detrás de la esfera ─────────────────────── */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      will-change: transform;
+      transform: translateZ(0);
+    }
+
+    /* Mancha principal — gold premium, izquierda-centro */
+    .blob-1 {
+      width: 130vw; height: 110vh;
+      top: -15vh; left: -30vw;
+      background: radial-gradient(ellipse at 42% 45%,
+        rgba(168, 132, 74, 0.28) 0%,
+        rgba(122, 86, 54, 0.16) 38%,
+        rgba(43, 51, 40, 0.10) 62%,
+        transparent 72%);
+      filter: blur(88px);
+      animation: organic-drift-1 34s ease-in-out infinite;
+    }
+
+    /* Mancha secundaria — olive cinematográfico, derecha */
+    .blob-2 {
+      width: 120vw; height: 115vh;
+      top: -5vh; right: -35vw;
+      background: radial-gradient(ellipse at 55% 48%,
+        rgba(59, 70, 55, 0.36) 0%,
+        rgba(74, 86, 69, 0.20) 40%,
+        rgba(43, 51, 40, 0.10) 62%,
+        transparent 74%);
+      filter: blur(92px);
+      animation: organic-drift-2 42s ease-in-out infinite;
+    }
+
+    /* Mancha de acento — bronce profundo, abajo-centro */
+    .blob-3 {
+      width: 90vw; height: 90vh;
+      bottom: -20vh; left: 5vw;
+      background: radial-gradient(ellipse at 50% 50%,
+        rgba(122, 86, 54, 0.24) 0%,
+        rgba(168, 132, 74, 0.12) 42%,
+        transparent 68%);
+      filter: blur(72px);
+      animation: organic-drift-3 30s ease-in-out infinite;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    #hero-screen {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 0 8vw;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .hero-logo {
+      position: absolute;
+      top: 2.5rem;
+      left: 4vw;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--primary);
+      animation: hero-fade-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+    }
+
+    .hero-nav {
+      position: absolute;
+      top: 2.5rem;
+      right: 4vw;
+      display: flex;
+      gap: 3rem;
+      animation: hero-fade-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+    }
+
+    .hero-nav-item {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--neutral-500);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font-body);
+      font-weight: 500;
+      transition: color 0.2s;
+      padding: 0;
+    }
+    .hero-nav-item:hover { color: var(--neutral-900); }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 6.5rem);
+      font-weight: 200;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--neutral-900);
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+      animation: hero-fade-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s both;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--neutral-500);
+      letter-spacing: 0.04em;
+      font-weight: 300;
+      animation: hero-fade-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.7s both;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 3rem;
+      left: 4vw;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: hero-fade-in 1s cubic-bezier(0.2, 0.8, 0.2, 1) 1.1s both;
+      cursor: pointer;
+    }
+
+    .scroll-ring {
+      position: absolute;
+      inset: 0;
+      animation: rotate-ring 8s linear infinite;
+      overflow: visible;
+    }
+
+    .scroll-ring-text {
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      fill: var(--neutral-500);
+      text-transform: uppercase;
+      font-family: var(--font-body);
+    }
+
+    .scroll-arrow {
+      width: 14px;
+      height: 14px;
+      color: var(--neutral-500);
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes rotate-ring {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    @keyframes hero-fade-in {
+      from { opacity: 0; transform: translateY(28px); filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+    }
+
+    /* ── App Nav ───────────────────────────────────────────────── */
+    #app {
+      position: relative;
+      z-index: 1;
+    }
+
+    .app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.1rem 4vw;
+      background: rgba(6, 7, 14, 0.35);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(24px) saturate(180%) brightness(0.92);
+      -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(0.92);
+    }
+
+    .app-nav-logo {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .app-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .app-nav-item {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--neutral-500);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 500;
+      transition: color 0.2s;
+      padding: 0;
+    }
+    .app-nav-item:hover { color: var(--neutral-900); }
+    .app-nav-item.active { color: var(--primary); }
+
+    .nav-month-input {
+      padding: 5px 9px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 8px;
+      color: var(--neutral-700);
+      font-size: 11px;
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+
+    /* ── Login Screen Overlay ──────────────────────────────────── */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 5, 5, 0.72);
+      backdrop-filter: blur(2px);
+      transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .login-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      padding: 3rem 2.5rem;
+      background: rgba(11, 11, 10, 0.90);
+      border: 1px solid rgba(168, 132, 74, 0.16);
+      border-radius: 2px;
+      backdrop-filter: blur(32px) saturate(120%);
+      box-shadow:
+        0 0 0 1px rgba(168, 132, 74, 0.06) inset,
+        0 40px 80px rgba(0, 0, 0, 0.72),
+        0 8px 24px rgba(0, 0, 0, 0.48);
+    }
+
+    .login-brand {
+      margin-bottom: 2.4rem;
+      text-align: left;
+    }
+    .login-brand-name {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--primary);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .login-brand-sub {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(241, 231, 208, 0.28);
+    }
+
+    .login-label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: rgba(241, 231, 208, 0.42);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(241, 231, 208, 0.04);
+      border: 1px solid rgba(168, 132, 74, 0.18);
+      border-radius: 2px;
+      color: var(--ink);
+      font-size: 13px;
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-input::placeholder { color: rgba(241, 231, 208, 0.22); }
+    .login-input:focus { border-color: rgba(168, 132, 74, 0.50); }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 1.2rem;
+      padding: 12px 0;
+      background: rgba(168, 132, 74, 0.14);
+      border: 1px solid rgba(168, 132, 74, 0.36);
+      border-radius: 2px;
+      color: var(--primary-light, #C6A06A);
+      font-size: 11px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .login-btn:hover {
+      background: rgba(168, 132, 74, 0.22);
+      border-color: rgba(168, 132, 74, 0.54);
+    }
+    .login-btn:active { background: rgba(168, 132, 74, 0.30); }
+
+    .login-hint {
+      margin-top: 1rem;
+      font-size: 11px;
+      color: rgba(241, 231, 208, 0.28);
+      min-height: 1.2em;
+      text-align: center;
+    }
+
+    /* ── Layout & Tabs ─────────────────────────────────────────── */
+    .layout {
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 650ms cubic-bezier(.2,.8,.2,1), transform 650ms cubic-bezier(.2,.8,.2,1);
+      will-change: opacity, transform;
+    }
+
+    .reveal.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+	    @media (prefers-reduced-motion: reduce) {
+	      .reveal { transition: none; opacity: 1; transform: none; }
+	      .blob, .sphere, .sphere-halo { animation: none; }
+	      .wander-stain { animation: none; }
+	      .scroll-ring { animation: none; }
+	      .hero-title, .hero-subtitle, .hero-nav, .hero-logo, .scroll-indicator {
+	        animation: none; opacity: 1; transform: none;
+	      }
+	    }
+
+    .tab { display: none !important; }
+    .tab.active { display: block !important; }
+
+    .content {
+      padding: 3rem 4vw 5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section { margin-bottom: 56px; }
+
+    /* ── Content Dividers (editorial) ──────────────────────────── */
+    .content-divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      margin-top: 3.5rem;
+    }
+    .content-divider:first-child { margin-top: 0; }
+    .content-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .content-label {
+      font-family: var(--font-body);
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--neutral-400);
+      white-space: nowrap;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.12);
+      backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--neutral-700);
+      margin-bottom: 8px;
+    }
+
+    input, select, textarea {
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: rgba(6, 7, 14, 0.55);
+      color: var(--neutral-900);
+      transition: all 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(166, 126, 78, 0.18);
+    }
+
+    .btn {
+      position: relative;
+      padding: 10px 20px;
+      background: rgba(166, 126, 78, 0.15);
+      color: rgba(255, 255, 255, 0.90);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      box-shadow:
+        0 0 6px rgba(0, 0, 0, 0.03),
+        0 2px 6px rgba(0, 0, 0, 0.08),
+        inset 3px 3px 0.5px -3px rgba(0, 0, 0, 0.9),
+        inset -3px -3px 0.5px -3px rgba(0, 0, 0, 0.85),
+        inset 1px 1px 1px -0.5px rgba(0, 0, 0, 0.6),
+        inset -1px -1px 1px -0.5px rgba(0, 0, 0, 0.6),
+        inset 0 0 6px 6px rgba(0, 0, 0, 0.12),
+        inset 0 0 2px 2px rgba(0, 0, 0, 0.06),
+        0 0 12px rgba(255, 255, 255, 0.08),
+        0 0 24px rgba(166, 126, 78, 0.12);
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+      z-index: 0;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      backdrop-filter: url("#container-glass") blur(0.5px);
+      -webkit-backdrop-filter: url("#container-glass") blur(0.5px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      pointer-events: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      background: rgba(166, 126, 78, 0.22);
+      box-shadow:
+        0 0 6px rgba(0, 0, 0, 0.03),
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 3px 3px 0.5px -3px rgba(0, 0, 0, 0.9),
+        inset -3px -3px 0.5px -3px rgba(0, 0, 0, 0.85),
+        inset 1px 1px 1px -0.5px rgba(0, 0, 0, 0.6),
+        inset -1px -1px 1px -0.5px rgba(0, 0, 0, 0.6),
+        inset 0 0 6px 6px rgba(0, 0, 0, 0.12),
+        inset 0 0 2px 2px rgba(0, 0, 0, 0.06),
+        0 0 18px rgba(255, 255, 255, 0.10),
+        0 0 32px rgba(166, 126, 78, 0.20);
+    }
+
+    .btn-danger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 1px solid rgba(220, 50, 50, 0.35);
+      background: rgba(220, 50, 50, 0.14);
+      color: rgba(255, 200, 200, 0.90);
+      transition: background 0.18s, transform 0.18s;
+    }
+
+    .btn-danger:hover {
+      background: rgba(220, 50, 50, 0.26);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: rgba(74, 222, 128, 0.14);
+      border-color: rgba(74, 222, 128, 0.25);
+    }
+
+    .btn-success:hover {
+      background: rgba(74, 222, 128, 0.22);
+    }
+
+    .table-container {
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.13);
+      backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table thead {
+      background: rgba(166, 126, 78, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    table th {
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--neutral-700);
+      font-size: 13px;
+    }
+
+    table td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--neutral-900);
+    }
+
+    table tbody tr:hover {
+      background: rgba(166, 126, 78, 0.06);
+    }
+
+    table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.12);
+      backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, background 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background: radial-gradient(450px 240px at 15% 0%, rgba(166, 126, 78, 0.12), transparent 60%);
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(166, 126, 78, 0.40);
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(200,151,58,0.20), inset 0 1px 0 rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .kpi-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--neutral-600);
+      margin: 0;
+    }
+
+    .kpi-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--primary);
+      stroke-width: 2;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--neutral-900);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-change {
+      font-size: 13px;
+      color: var(--neutral-500);
+    }
+
+    .kpi-change-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--neutral-600);
+    }
+
+    .delta-up {
+      border-color: rgba(74, 222, 128, 0.30);
+      background: rgba(74, 222, 128, 0.10);
+      color: #86efac;
+    }
+
+    .delta-down {
+      border-color: rgba(248, 113, 113, 0.30);
+      background: rgba(248, 113, 113, 0.10);
+      color: #fca5a5;
+    }
+
+    .delta-flat {
+      border-color: rgba(148, 163, 184, 0.20);
+      background: rgba(148, 163, 184, 0.06);
+      color: var(--neutral-600);
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .chart-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.12);
+      backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(160%) brightness(1.08);
+    }
+
+    .chart-header {
+      margin-bottom: 16px;
+    }
+
+    .chart-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--neutral-900);
+      margin: 0;
+    }
+
+    .chart-canvas-container {
+      position: relative;
+      height: 300px;
+    }
+
+    canvas {
+      max-height: 100%;
+    }
+
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      color: var(--neutral-400);
+      font-size: 14px;
+    }
+
+    .report-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .btn-report {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px) saturate(180%) brightness(1.04);
+      color: var(--neutral-700);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-report:hover:not(:disabled) {
+      background: rgba(166, 126, 78, 0.10);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-report:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-report svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 1.5;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--neutral-200);
+      background: var(--neutral-50);
+      color: var(--neutral-700);
+      white-space: nowrap;
+    }
+
+    .pill-success {
+      border-color: rgba(74, 222, 128, 0.30);
+      background: rgba(74, 222, 128, 0.10);
+      color: #86efac;
+    }
+
+    .pill-warning {
+      border-color: rgba(248, 113, 113, 0.30);
+      background: rgba(248, 113, 113, 0.10);
+      color: #fca5a5;
+    }
+
+    .subtle {
+      color: var(--neutral-500);
+      font-size: 13px;
+    }
+
+    .inline-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--neutral-800);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(166, 126, 78, 0.10);
+    }
+
+    @media (max-width: 1024px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .app-nav-links { gap: 1.5rem; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: clamp(2rem, 10vw, 3rem); }
+      .hero-nav { gap: 1.5rem; }
+      .content { padding: 2rem 5vw 4rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr; }
+      table { font-size: 13px; }
+      table th, table td { padding: 12px 8px; }
+      .app-nav { padding: 0.9rem 5vw; }
+      .app-nav-links { gap: 1.2rem; }
+    }
+    /* ── Iris reveal ─────────────────────────────────────────────── */
+    @keyframes iris-open {
+      0%   { opacity: 0; transform: translateY(calc(-50% + 10vh)) translateX(calc(-50vw + 36vmin)) translateZ(0) scale(0.03); }
+      5%   { opacity: 1; }
+      100% { transform: translateY(-50%) translateX(0) translateZ(0) scale(1); opacity: 1; }
+    }
+    @keyframes iris-exit {
+      0%   { opacity: 1; }
+      100% { opacity: 0; pointer-events: none; }
+    }
+
+    .iris-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      pointer-events: none;
+      animation: iris-exit 0.9s cubic-bezier(0.4, 0, 0.2, 1) 2.9s both;
+    }
+
+    .iris-hole {
+      position: absolute;
+      width: 96vmin;
+      height: 96vmin;
+      top: 40%;
+      right: -12vmin;
+      border-radius: 50%;
+      /* La sombra cubre todo lo que está fuera del círculo con negro */
+      box-shadow: 0 0 0 200vmax #0D0D0D;
+      animation: iris-open 2.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+
+    body.intro-playing #app { opacity: 0; pointer-events: none; }
+    body.intro-playing .hero-text,
+    body.intro-playing .hero-sub { opacity: 0 !important; }
+
+    /* ── Cierre split cards ──────────────────────────────────────── */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── Iris reveal ─────────────────────────────────────────── -->
+  <div class="iris-overlay" id="iris-overlay" aria-hidden="true">
+    <div class="iris-hole"></div>
+  </div>
+
+  <!-- Hidden SVG filters (grain) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="grainFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.9"/>
+      </feComponentTransfer>
+    </filter>
+  </svg>
+
+  <!-- Cinematic background -->
+  <div class="blob-container" aria-hidden="true">
+    <canvas id="aurora-canvas" class="aurora-canvas"></canvas>
+    <svg class="fluid-bg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+		        <linearGradient id="fluidGradient" x1="0" y1="0" x2="1" y2="1">
+		          <stop offset="0%" stop-color="rgba(160,224,171,0.46)"/>
+		          <stop offset="50%" stop-color="rgba(255,172,46,0.44)"/>
+		          <stop offset="100%" stop-color="rgba(165,45,37,0.42)"/>
+		        </linearGradient>
+
+	        <filter id="fluidFilter" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+	          <feTurbulence id="fluidTurbulence" type="turbulence" baseFrequency="0.010 0.016" numOctaves="2" seed="2" stitchTiles="stitch" result="noise"/>
+	          <feDisplacementMap in="SourceGraphic" in2="noise" scale="64" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+	          <feColorMatrix id="fluidHue" in="displaced" type="hueRotate" values="0" result="hued"/>
+	          <feGaussianBlur in="hued" stdDeviation="0.6" result="soft"/>
+	          <feComposite in="soft" in2="SourceGraphic" operator="atop"/>
+	        </filter>
+	      </defs>
+
+	      <rect x="-40" y="-40" width="1080" height="1080" fill="url(#fluidGradient)" filter="url(#fluidFilter)"/>
+	    </svg>
+	    <div class="wander-stain"></div>
+	    <div class="blob blob-1"></div>
+	    <div class="blob blob-2"></div>
+	    <div class="blob blob-3"></div>
+    <div class="sphere-halo"></div>
+    <div class="sphere"></div>
+  </div>
+  <div class="glass-wash" aria-hidden="true"></div>
+  <div class="film-grain" aria-hidden="true"></div>
+
+  <!-- GlassFilter SVG — LiquidButton effect -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"
+       style="position:absolute;pointer-events:none;overflow:hidden;" aria-hidden="true">
+    <defs>
+      <filter id="container-glass" x="-20%" y="-20%" width="140%" height="140%"
+              color-interpolation-filters="linearRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3"
+                      stitchTiles="stitch" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise"
+                           scale="8" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+        <feGaussianBlur in="displaced" stdDeviation="0.5" result="blurred"/>
+        <feComposite in="blurred" in2="SourceGraphic" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+	  <section id="hero-screen">
+	    <div class="hero-logo">Apto Urban</div>
+
+	    <nav class="hero-nav">
+	      <button class="hero-nav-item" onclick="goToApp('entrada')">Registros</button>
+	      <button class="hero-nav-item" onclick="goToApp('entrada','costos')">Costos y cierre</button>
+	      <button class="hero-nav-item" onclick="goToApp('dashboard')">Dashboard</button>
+	    </nav>
+
+    <div class="hero-title">Apto Urban<br>960</div>
+    <p class="hero-subtitle">Gestión de tu propiedad</p>
+
+    <div class="scroll-indicator" onclick="goToApp('entrada')">
+      <svg class="scroll-ring" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <path id="ring-path" d="M 40,6 A 34,34 0 1,1 39.99,6"/>
+        </defs>
+        <text>
+          <textPath href="#ring-path" class="scroll-ring-text">SCROLL DOWN · SCROLL DOWN · </textPath>
+        </text>
+      </svg>
+      <svg class="scroll-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ── LOGIN OVERLAY ──────────────────────────────────────── -->
+  <div id="login-screen" class="login-screen hidden">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-brand-name">Apto Urban</span>
+        <span class="login-brand-sub">960 · Panel de gestión</span>
+      </div>
+      <label class="login-label" for="loginEmail">Correo electrónico</label>
+      <input type="email" id="loginEmail" class="login-input" placeholder="tu@email.com" autocomplete="email">
+      <button class="login-btn" onclick="loginWithEmail()">Acceder</button>
+      <p class="login-hint" id="loginHint"></p>
+    </div>
+  </div>
+
+  <!-- ── APP ──────────────────────────────────────────────── -->
+  <div id="app">
+	    <nav class="app-nav">
+	      <div class="app-nav-logo">Apto Urban</div>
+	      <div class="app-nav-links">
+	        <input type="month" id="dashMonth" class="nav-month-input" onchange="handleDashMonthChange()">
+	        <button class="app-nav-item active" data-tab="entrada" onclick="switchTab('entrada', event)">Registros</button>
+	        <button class="app-nav-item" data-tab="dashboard" onclick="switchTab('dashboard', event)">Dashboard</button>
+	        <span class="pill pill-success" id="authPill" style="display:none;">Conectado</span>
+	        <button class="app-nav-item" id="btnSignOut" style="display:none;" onclick="supabaseSignOut()">Salir</button>
+	      </div>
+	    </nav>
+
+    <div class="layout">
+      <div class="content">
+        <!-- ══════════════════════════════════════════
+             TAB 1: REGISTROS
+        ══════════════════════════════════════════ -->
+	        <div id="entrada" class="tab active">
+
+          <div class="section">
+            <div class="content-divider"><span class="content-label">Reservas</span></div>
+
+            <div class="inline-actions" style="margin-bottom:14px;">
+              <span class="pill" id="bookingsMonthPill">Viendo: —</span>
+              <label class="subtle" for="bookingsMonth" style="margin-left:4px;">Mes</label>
+              <input type="month" id="bookingsMonth" onchange="handleBookingsMonthChange()" style="max-width:180px;">
+              <span class="subtle" id="bookingsMonthSummary">—</span>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Check-in</label>
+                <input type="date" id="checkIn" required onfocus="this.showPicker&&this.showPicker()" onclick="this.showPicker&&this.showPicker()">
+              </div>
+              <div class="form-group">
+                <label>Check-out</label>
+                <input type="date" id="checkOut" required onfocus="this.showPicker&&this.showPicker()" onclick="this.showPicker&&this.showPicker()">
+              </div>
+              <div class="form-group">
+                <label>Nombre huésped</label>
+                <input type="text" id="guestName" placeholder="Ej: Juan Pérez" required>
+              </div>
+              <div class="form-group">
+                <label>Ingreso (USD)</label>
+                <input type="number" id="incomeUsd" placeholder="Ej: 50.00" step="0.01" required>
+              </div>
+            </div>
+
+            <button class="btn" type="button" onclick="addBooking()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Nueva Reserva
+            </button>
+
+	            <div class="table-container" style="margin-top: 24px;">
+	              <table id="bookingsTable">
+                <thead>
+                  <tr>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Noches</th>
+                    <th>Huésped</th>
+                    <th>Ingreso USD</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+	            </div>
+	          </div>
+
+		          <div class="section" id="costos">
+		            <div class="content-divider"><span class="content-label">Gastos</span></div>
+
+		            <div class="inline-actions" style="margin-bottom:14px;">
+	              <span class="pill" id="expensesMonthPill">Mes: —</span>
+	              <span class="subtle" id="expensesMonthSummary">—</span>
+	            </div>
+
+	            <div class="form-grid">
+	              <div class="form-group">
+	                <label>Fecha</label>
+	                <input type="date" id="expenseDate" required onfocus="this.showPicker&&this.showPicker()" onclick="this.showPicker&&this.showPicker()">
+	              </div>
+	              <div class="form-group">
+	                <label>Categoría</label>
+	                <input type="text" id="expenseCategory" placeholder="Ej: Aseo, Servicios, Reparación" required>
+	              </div>
+	              <div class="form-group">
+	                <label>Monto (COP)</label>
+	                <input type="number" id="expenseAmountCop" placeholder="Ej: 85000" step="1" required>
+	              </div>
+	              <div class="form-group">
+	                <label>Notas (opcional)</label>
+	                <input type="text" id="expenseNotes" placeholder="Ej: Recibo #123">
+	              </div>
+	            </div>
+
+	            <div class="inline-actions" style="margin-top:14px;">
+	              <button class="btn" type="button" onclick="addExpense()">Agregar gasto</button>
+	              <button class="btn btn-secondary" type="button" onclick="downloadExpensesJSON()">Exportar JSON</button>
+	              <label class="btn btn-secondary" for="importJsonInput" style="cursor:pointer;">Importar JSON</label>
+	              <input id="importJsonInput" type="file" accept="application/json" style="display:none" onchange="handleImportJSON(this.files && this.files[0])">
+	              <span class="subtle">Importa `imported_data.json` (reservas + gastos).</span>
+	            </div>
+
+	            <div class="table-container" style="margin-top: 24px;">
+	              <table id="expensesTable">
+	                <thead>
+	                  <tr>
+	                    <th>Fecha</th>
+	                    <th>Categoría</th>
+	                    <th>Monto (COP)</th>
+	                    <th>Notas</th>
+	                    <th>Acciones</th>
+	                  </tr>
+	                </thead>
+	                <tbody></tbody>
+	              </table>
+	            </div>
+	          </div>
+
+	          <div class="section">
+	            <div class="content-divider"><span class="content-label">Cierre del mes</span></div>
+
+	            <div class="inline-actions" style="margin-bottom:14px;">
+	              <span class="pill" id="closureMonthPill">Mes: —</span>
+	              <span class="pill" id="closureStatusPill">Sin cierre</span>
+	              <span class="subtle" id="closureSummary">—</span>
+	            </div>
+
+	            <div class="form-grid">
+	              <div class="form-group">
+	                <label>TRM cierre (COP/USD)</label>
+	                <input type="number" id="closureTrm" step="1" min="1" placeholder="Ej: 4100">
+	              </div>
+	              <div class="form-group">
+	                <label>% Nicolás</label>
+	                <input type="number" id="settingsIncomeSplitNicolas" step="1" min="0" max="100" placeholder="Ej: 60" oninput="updateCarolinaPct()">
+	              </div>
+	              <div class="form-group">
+	                <label>% Carolina</label>
+	                <input type="number" id="settingsCarolinaPct" step="1" min="0" max="100" placeholder="—" readonly style="opacity:0.55;cursor:default;">
+	              </div>
+	              <div class="form-group">
+	                <label class="subtle">Acciones</label>
+	                <div class="inline-actions">
+	                  <button class="btn" type="button" onclick="saveSettingsFromUI();calculateAndSaveClosure()">Calcular y guardar cierre</button>
+	                  <button class="btn btn-secondary" type="button" onclick="deleteClosureForMonth()">Eliminar cierre</button>
+	                </div>
+	              </div>
+	            </div>
+
+	            <div class="table-container" style="margin-top: 18px;">
+	              <table id="closureTable">
+	                <thead>
+	                  <tr>
+	                    <th>Concepto</th>
+	                    <th style="text-align:right;">Valor</th>
+	                  </tr>
+	                </thead>
+	                <tbody></tbody>
+	              </table>
+	            </div>
+	          </div>
+
+	        </div>
+
+	        <!-- ══════════════════════════════════════════
+	             TAB 2: DASHBOARD
+	        ══════════════════════════════════════════ -->
+	        <div id="dashboard" class="tab">
+
+	          <div class="section">
+	            <div class="content-divider"><span class="content-label">Gráficos</span></div>
+	            <div class="charts-grid">
+	              <div class="chart-card">
+	                <div class="chart-header"><h3>Tendencia Neto (últimos 12 meses)</h3></div>
+	                <div class="chart-canvas-container"><canvas id="netTrendChart"></canvas></div>
+	              </div>
+	              <div class="chart-card">
+	                <div class="chart-header"><h3>Ingresos por Semana</h3></div>
+	                <div class="chart-canvas-container"><canvas id="incomeChart"></canvas></div>
+	              </div>
+	              <div class="chart-card">
+	                <div class="chart-header"><h3>Gastos por Categoría</h3></div>
+	                <div class="chart-canvas-container"><canvas id="expensesCategoryChart"></canvas></div>
+	              </div>
+	              <div class="chart-card">
+	                <div class="chart-header"><h3>Ocupación (%)</h3></div>
+	                <div class="chart-canvas-container"><canvas id="occupancyChart"></canvas></div>
+	              </div>
+	              <div class="chart-card">
+	                <div class="chart-header"><h3>Comisiones</h3></div>
+	                <div class="chart-canvas-container"><canvas id="commissionChart"></canvas></div>
+	              </div>
+	            </div>
+	          </div>
+
+	          <div class="section">
+	            <div class="content-divider"><span class="content-label">Reporte</span></div>
+	            <div class="report-buttons">
+	              <button id="btnDashPDF" class="btn-report" onclick="downloadReportPDF()" disabled>
+	                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+	                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+	                  <polyline points="14 2 14 8 20 8"/>
+	                </svg>
+	                Descargar PDF
+	              </button>
+	              <button id="btnDashExcel" class="btn-report" onclick="downloadReportExcel()" disabled>
+	                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+	                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+	                  <polyline points="14 2 14 8 20 8"/>
+	                </svg>
+	                Descargar Excel
+	              </button>
+	            </div>
+	            <p class="subtle" id="dashReportHint" style="margin-top:10px;">Guarda el cierre del mes primero para habilitar los reportes.</p>
+	          </div>
+
+	        </div>
+
+      </div><!-- /.content -->
+    </div><!-- /.layout -->
+  </div><!-- /#app -->
+
+  <script>
+    if (window.Chart) {
+      Chart.defaults.color = 'rgba(232, 230, 222, 0.60)';
+      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.07)';
+    }
+
+	    function safeCreateIcons() {
+	      try {
+	        if (window.lucide?.createIcons) window.lucide.createIcons();
+	      } catch {}
+	    }
+
+	    // ── Supabase ────────────────────────────────────────────────
+	    // IMPORTANT:
+	    // - Use the **anon public** key here (Settings → API → anon public).
+	    // - Never put `service_role` / `sb_secret_*` keys in the browser.
+	    // NOTE: This must match the project ref inside your anon key JWT (`ref` claim).
+	    // Your anon key is for ref `qqcxvngbppmlmpgrlvbf`, so the URL must be:
+	    const SUPABASE_URL = 'https://qqcxvngbppmlmpgrlvbf.supabase.co';
+	    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY3h2bmdicHBtbG1wZ3JsdmJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MDA0NDksImV4cCI6MjA5NDI3NjQ0OX0._AnS733idLipYIxLRvpJwqRNeONcgB5tWtzzbtrTGP8';
+	    const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+	    const supabase = USE_SUPABASE ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+	    function getSupabaseStatusText() {
+	      if (!window.supabase) return 'Supabase JS no cargó (CDN).';
+	      if (!SUPABASE_ANON_KEY) return 'Falta SUPABASE_ANON_KEY (anon public).';
+	      return 'Listo para conectar.';
+	    }
+
+	    let bookings = [];
+	    let expenses = [];
+	    let _seedsApplied = false;   // guard: seeds run once per session
+	    let _showLoginTimer = null;  // debounce: avoid flash on SIGNED_OUT → SIGNED_IN
+	    function makeId() {
+	      try {
+	        if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+	      } catch {}
+	      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+	    }
+
+	    function normalizeBooking(raw) {
+	      if (!raw || typeof raw !== 'object') return null;
+	      const checkIn = raw.checkIn || raw.check_in;
+	      const checkOut = raw.checkOut || raw.check_out;
+	      const guestName = raw.guestName || raw.guest_name || '';
+	      const incomeUsd = Number(raw.incomeUsd ?? raw.income_usd ?? 0);
+	      const nights = Number(raw.nights ?? 0) || 0;
+	      if (!checkIn || !checkOut) return null;
+	      return {
+	        id: String(raw.id ?? makeId()),
+	        checkIn: String(checkIn),
+	        checkOut: String(checkOut),
+	        nights: nights > 0 ? nights : Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)) || 1),
+	        guestName: String(guestName),
+	        incomeUsd: Number.isFinite(incomeUsd) ? incomeUsd : 0
+	      };
+	    }
+
+	    function normalizeExpense(raw) {
+	      if (!raw || typeof raw !== 'object') return null;
+	      const dateStr = raw.date;
+	      const category = raw.category || '';
+	      const amountCop = Number(raw.amountCop ?? raw.amount_cop ?? 0);
+	      const notes = raw.notes ?? '';
+	      if (!dateStr || !category) return null;
+	      return {
+	        id: String(raw.id ?? makeId()),
+	        date: String(dateStr),
+	        category: String(category),
+	        amountCop: Number.isFinite(amountCop) ? Math.round(amountCop) : 0,
+	        notes: notes ? String(notes) : ''
+	      };
+	    }
+
+	    function normalizeState() {
+	      bookings = (Array.isArray(bookings) ? bookings : []).map(normalizeBooking).filter(Boolean);
+	      expenses = (Array.isArray(expenses) ? expenses : []).map(normalizeExpense).filter(Boolean);
+	    }
+
+	    const DEFAULT_SETTINGS = {
+	      exchangeRate: 4000,
+	      airbnbFeePct: 0.168,
+	      hostFeePct: 0.032,
+      minNightsProfit: 12,
+      incomeSplitNicolas: 0.60,
+      expenseSplitNicolas: 0.30
+    };
+    let settings = { ...DEFAULT_SETTINGS };
+
+	    function saveToLocalStorage() {
+	      localStorage.setItem('bookings', JSON.stringify(bookings));
+	      localStorage.setItem('expenses', JSON.stringify(expenses));
+	    }
+
+	    function loadFromLocalStorage() {
+	      const savedBookings = localStorage.getItem('bookings');
+	      const savedExpenses = localStorage.getItem('expenses');
+	      bookings = savedBookings ? JSON.parse(savedBookings) : [];
+	      expenses = savedExpenses ? JSON.parse(savedExpenses) : [];
+	      normalizeState();
+	    }
+
+    function loadSettings() {
+      const raw = localStorage.getItem('settings');
+      if (!raw) { settings = { ...DEFAULT_SETTINGS }; return; }
+      try {
+        const parsed = JSON.parse(raw);
+        settings = { ...DEFAULT_SETTINGS, ...parsed };
+      } catch { settings = { ...DEFAULT_SETTINGS }; }
+    }
+
+    function saveSettings() {
+      localStorage.setItem('settings', JSON.stringify(settings));
+    }
+
+    function loadClosures() {
+      try { return JSON.parse(localStorage.getItem('closures') || '{}') || {}; }
+      catch { return {}; }
+    }
+
+    function saveClosures(closures) {
+      localStorage.setItem('closures', JSON.stringify(closures || {}));
+    }
+
+	    function seedFebruaryExpenses() {
+	      const seed = [
+	        { date: '2026-02-28', category: 'Administración', amountCop: 270366, notes: '' },
+	        { date: '2026-02-28', category: 'Luz',            amountCop:  55480, notes: '' },
+	        { date: '2026-02-28', category: 'Internet y TV',  amountCop: 129651, notes: '' },
+	      ];
+	      const existing = new Set(expenses.map(e => e.date + '|' + (e.category || '').toLowerCase() + '|' + Math.round(e.amountCop)));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.date + '|' + raw.category.toLowerCase() + '|' + raw.amountCop;
+	        if (existing.has(key)) return;
+	        expenses.push({ id: makeId(), date: raw.date, category: raw.category, amountCop: raw.amountCop, notes: raw.notes });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+	    function seedFebruaryBookings() {
+	      const seed = [
+	        { checkIn: '2026-02-02', checkOut: '2026-02-03', guestName: 'Silvina Pedraza',         nights: 1, incomeUsd:  25.07 },
+	        { checkIn: '2026-02-04', checkOut: '2026-02-06', guestName: 'Jorge Velasquez',        nights: 2, incomeUsd:  54.00 },
+	        { checkIn: '2026-02-05', checkOut: '2026-02-06', guestName: 'Juan Camues',             nights: 1, incomeUsd:  21.21 },
+	        { checkIn: '2026-02-06', checkOut: '2026-02-08', guestName: 'Francesco Nicola Russo',  nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-08', checkOut: '2026-02-13', guestName: 'Richard Lepage',          nights: 2, incomeUsd:  50.15 },
+	        { checkIn: '2026-02-13', checkOut: '2026-02-15', guestName: 'Jorge Velasquez',         nights: 5, incomeUsd: 207.32 },
+	        { checkIn: '2026-02-15', checkOut: '2026-02-16', guestName: 'Vivian Alvarez',          nights: 2, incomeUsd:  50.14 },
+	        { checkIn: '2026-02-16', checkOut: '2026-02-17', guestName: 'Silvina Pedraza',         nights: 1, incomeUsd:  25.07 },
+	        { checkIn: '2026-02-17', checkOut: '2026-02-18', guestName: 'Istvan Dp',               nights: 1, incomeUsd:  27.01 },
+	        { checkIn: '2026-02-18', checkOut: '2026-02-19', guestName: 'Shirley Madiedo',         nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-19', checkOut: '2026-02-20', guestName: 'Adnane Arrach',           nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-20', checkOut: '2026-02-21', guestName: 'Silvina Pedraza',         nights: 1, incomeUsd:  25.07 },
+	        { checkIn: '2026-02-21', checkOut: '2026-02-22', guestName: 'Maria Montaño',           nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-22', checkOut: '2026-02-23', guestName: 'Gustavo Chaparro',        nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-23', checkOut: '2026-02-25', guestName: 'Juliana Vasquez',         nights: 1, incomeUsd:  26.04 },
+	        { checkIn: '2026-02-25', checkOut: '2026-02-26', guestName: 'Oscar Ibañez',            nights: 2, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-26', checkOut: '2026-02-28', guestName: 'Martha Sepulveda',        nights: 1, incomeUsd:  27.00 },
+	        { checkIn: '2026-02-28', checkOut: '2026-03-01', guestName: 'Karol Muñoz',             nights: 2, incomeUsd:  54.00 },
+	      ];
+	      const existing = new Set(bookings.map(b => b.checkIn + '|' + b.guestName.toLowerCase()));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.checkIn + '|' + raw.guestName.toLowerCase();
+	        if (existing.has(key)) return;
+	        bookings.push({ id: makeId(), checkIn: raw.checkIn, checkOut: raw.checkOut, guestName: raw.guestName, nights: raw.nights, incomeUsd: raw.incomeUsd });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+	    function seedMarchExpenses() {
+	      const seed = [
+	        { date: '2026-03-31', category: 'Administración', amountCop: 283900, notes: '' },
+	        { date: '2026-03-31', category: 'Luz',            amountCop:  63280, notes: '' },
+	        { date: '2026-03-31', category: 'Agua',           amountCop:  50240, notes: '' },
+	        { date: '2026-03-31', category: 'Internet y TV',  amountCop: 119902, notes: '' },
+	      ];
+	      const existing = new Set(expenses.map(e => e.date + '|' + (e.category || '').toLowerCase() + '|' + Math.round(e.amountCop)));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.date + '|' + raw.category.toLowerCase() + '|' + raw.amountCop;
+	        if (existing.has(key)) return;
+	        expenses.push({ id: makeId(), date: raw.date, category: raw.category, amountCop: raw.amountCop, notes: raw.notes });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+	    function seedMarchBookings() {
+	      const seed = [
+	        { checkIn: '2026-03-02', checkOut: '2026-03-16', guestName: 'Kirstin Anne',      nights: 14, incomeUsd: 317.26 },
+	        { checkIn: '2026-03-16', checkOut: '2026-03-17', guestName: 'Philemon Viennas',  nights:  1, incomeUsd:  27.00 },
+	        { checkIn: '2026-03-17', checkOut: '2026-03-19', guestName: 'Jose Hernandez',    nights:  2, incomeUsd:  54.00 },
+	        { checkIn: '2026-03-19', checkOut: '2026-03-20', guestName: 'Yazmin Navarro',    nights:  1, incomeUsd:  27.00 },
+	        { checkIn: '2026-03-20', checkOut: '2026-03-21', guestName: 'Fabian Beltran',    nights:  1, incomeUsd:  27.00 },
+	        { checkIn: '2026-03-21', checkOut: '2026-03-23', guestName: 'Ariel Torres',      nights:  2, incomeUsd:  54.07 },
+	        { checkIn: '2026-03-23', checkOut: '2026-03-25', guestName: 'Fernando Baena',    nights:  2, incomeUsd:  54.07 },
+	        { checkIn: '2026-03-25', checkOut: '2026-03-26', guestName: 'Isabel Avila',      nights:  1, incomeUsd:  27.00 },
+	        { checkIn: '2026-03-27', checkOut: '2026-03-29', guestName: 'Diana Mejia',       nights:  2, incomeUsd:  54.00 },
+	      ];
+	      const existing = new Set(bookings.map(b => b.checkIn + '|' + b.guestName.toLowerCase()));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.checkIn + '|' + raw.guestName.toLowerCase();
+	        if (existing.has(key)) return;
+	        bookings.push({ id: makeId(), checkIn: raw.checkIn, checkOut: raw.checkOut, guestName: raw.guestName, nights: raw.nights, incomeUsd: raw.incomeUsd });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+	    function seedJanuaryExpenses() {
+	      const seed = [
+	        { date: '2026-01-31', category: 'Administración',         amountCop: 229487, notes: '' },
+	        { date: '2026-01-31', category: 'Luz',                    amountCop:  51600, notes: '' },
+	        { date: '2026-01-31', category: 'Agua',                   amountCop:  44110, notes: '' },
+	        { date: '2026-01-31', category: 'Internet y TV',          amountCop: 129000, notes: '' },
+	        { date: '2026-01-31', category: 'Otros',                  amountCop: 275450, notes: '' },
+	      ];
+	      const existing = new Set(expenses.map(e => e.date + '|' + (e.category || '').toLowerCase() + '|' + Math.round(e.amountCop)));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.date + '|' + raw.category.toLowerCase() + '|' + raw.amountCop;
+	        if (existing.has(key)) return;
+	        expenses.push({ id: makeId(), date: raw.date, category: raw.category, amountCop: raw.amountCop, notes: raw.notes });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+	    function seedJanuaryBookings() {
+	      const seed = [
+	        { checkIn: '2026-01-01', checkOut: '2026-01-03', guestName: 'Esdraz Pichardo',    nights: 2, incomeUsd: 50.14 },
+	        { checkIn: '2026-01-08', checkOut: '2026-01-10', guestName: 'Vanessa Locheo',     nights: 2, incomeUsd: 48.21 },
+	        { checkIn: '2026-01-09', checkOut: '2026-01-10', guestName: 'Juan Molano',         nights: 1, incomeUsd: 25.07 },
+	        { checkIn: '2026-01-10', checkOut: '2026-01-12', guestName: 'Oel Pedraza',         nights: 1, incomeUsd: 26.04 },
+	        { checkIn: '2026-01-12', checkOut: '2026-01-14', guestName: 'Angel Patiño',        nights: 2, incomeUsd: 50.14 },
+	        { checkIn: '2026-01-13', checkOut: '2026-01-14', guestName: 'Ada Maria',           nights: 1, incomeUsd: 25.07 },
+	        { checkIn: '2026-01-14', checkOut: '2026-01-15', guestName: 'Marcela Mejia',       nights: 1, incomeUsd: 26.04 },
+	        { checkIn: '2026-01-16', checkOut: '2026-01-18', guestName: 'Jordan Batista',      nights: 1, incomeUsd: 26.04 },
+	        { checkIn: '2026-01-19', checkOut: '2026-01-23', guestName: 'Catalina Correa',     nights: 2, incomeUsd: 50.14 },
+	        { checkIn: '2026-01-23', checkOut: '2026-01-25', guestName: 'Alex Villacreses',    nights: 4, incomeUsd: 99.32 },
+	        { checkIn: '2026-01-25', checkOut: '2026-01-26', guestName: 'Carlos Valero',       nights: 2, incomeUsd: 47.25 },
+	        { checkIn: '2026-01-26', checkOut: '2026-01-28', guestName: 'Juan Hernandez',      nights: 1, incomeUsd: 19.29 },
+	        { checkIn: '2026-01-28', checkOut: '2026-01-30', guestName: 'Valentina Tovar',     nights: 2, incomeUsd: 46.29 },
+	        { checkIn: '2026-01-30', checkOut: '2026-01-31', guestName: 'Amid Bouselahane',   nights: 1, incomeUsd: 19.29 },
+	        { checkIn: '2026-01-31', checkOut: '2026-02-02', guestName: 'Danna Miranda',       nights: 1, incomeUsd: 27.00 },
+	      ];
+	      const existing = new Set(bookings.map(b => b.checkIn + '|' + b.guestName.toLowerCase()));
+	      let added = false;
+	      seed.forEach(raw => {
+	        const key = raw.checkIn + '|' + raw.guestName.toLowerCase();
+	        if (existing.has(key)) return;
+	        bookings.push({ id: makeId(), checkIn: raw.checkIn, checkOut: raw.checkOut, guestName: raw.guestName, nights: raw.nights, incomeUsd: raw.incomeUsd });
+	        existing.add(key);
+	        added = true;
+	      });
+	      if (added) saveToLocalStorage();
+	    }
+
+		    window.addEventListener('load', () => {
+	      window.scrollTo(0, 0);
+	      history.scrollRestoration = 'manual';
+	      document.body.style.overflow = 'hidden';
+	      setTimeout(() => { document.body.style.overflow = ''; }, 4000);
+	      document.body.classList.add('intro-playing');
+	      setTimeout(() => { document.body.classList.remove('intro-playing'); }, 4000);
+
+		      initAuroraWebGL();
+		      initFluidBackground();
+		      loadFromLocalStorage();
+		      seedJanuaryExpenses();
+		      seedJanuaryBookings();
+		      seedFebruaryExpenses();
+		      seedFebruaryBookings();
+		      seedMarchExpenses();
+		      seedMarchBookings();
+		      loadSettings();
+		      syncSettingsToUI();
+	      renderTables();
+	      setCurrentMonth();
+	      initSupabaseAuthUI();
+	      // Best effort: if Supabase is configured and user is logged in, hydrate from DB.
+	      if (USE_SUPABASE) hydrateFromSupabase();
+	      updateDashboard();
+	      updateCierreTab();
+	      safeCreateIcons();
+	      initSphereClick();
+	      initBgDimmer();
+	      initIrisCleanup();
+	      initReveals();
+	    });
+
+	    function initIrisCleanup() {
+	      const overlay = document.getElementById('iris-overlay');
+	      if (!overlay) return;
+	      // Quitar del DOM cuando la animación de salida termina (no ocupa z-index después)
+	      overlay.addEventListener('animationend', (e) => {
+	        if (e.animationName === 'iris-exit') overlay.remove();
+	      });
+	    }
+
+	    function initFluidBackground() {
+	      const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	      if (prefersReduce) return;
+
+	      const turb = document.getElementById('fluidTurbulence');
+	      const hue = document.getElementById('fluidHue');
+	      if (!turb || !hue) return;
+
+	      const start = performance.now();
+	      const baseX = 0.010;
+	      const baseY = 0.016;
+
+	      function tick(now) {
+	        const t = (now - start) / 1000;
+	        const tide = Math.sin(t * 0.12) * 0.0032;
+	        const rip1 = Math.sin(t * 0.65) * 0.0016;
+	        const rip2 = Math.cos(t * 0.52) * 0.0012;
+	        const x = Math.max(0.002, baseX + tide + rip1);
+	        const y = Math.max(0.002, baseY + tide + rip2);
+	        turb.setAttribute('baseFrequency', `${x.toFixed(4)} ${y.toFixed(4)}`);
+
+	        const angle = (Math.sin(t * 0.08) * 18) + (Math.sin(t * 0.22) * 6);
+	        hue.setAttribute('values', angle.toFixed(3));
+
+	        requestAnimationFrame(tick);
+	      }
+
+	      requestAnimationFrame(tick);
+	    }
+
+	    function initAuroraWebGL() {
+	      const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	      if (prefersReduce) return;
+
+	      const canvas = document.getElementById('aurora-canvas');
+	      if (!canvas) return;
+
+	      const gl = canvas.getContext('webgl', {
+	        antialias: false,
+	        alpha: true,
+	        premultipliedAlpha: true,
+	        powerPreference: 'high-performance'
+	      });
+	      if (!gl) return;
+
+	      const vsrc = `
+	        attribute vec2 a_pos;
+	        varying vec2 v_uv;
+	        void main() {
+	          v_uv = a_pos * 0.5 + 0.5;
+	          gl_Position = vec4(a_pos, 0.0, 1.0);
+	        }
+	      `;
+
+	      const fsrc = `
+	        precision highp float;
+	        varying vec2 v_uv;
+	        uniform vec2  u_res;
+	        uniform vec2  u_mouse;
+	        uniform float u_time;
+
+	        float hash(vec2 p) {
+	          p = fract(p * vec2(127.34, 311.78));
+	          p += dot(p, p + 45.32);
+	          return fract(p.x * p.y);
+	        }
+	        float vn(vec2 p) {
+	          vec2 i = floor(p); vec2 f = fract(p);
+	          vec2 u = f*f*(3.0-2.0*f);
+	          return mix(mix(hash(i), hash(i+vec2(1.0,0.0)), u.x),
+	                     mix(hash(i+vec2(0.0,1.0)), hash(i+vec2(1.0,1.0)), u.x), u.y);
+	        }
+	        float fbm(vec2 p) {
+	          mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
+	          float v = 0.0; float a = 0.5;
+	          for (int i = 0; i < 4; i++) { v += a*vn(p); p = m*p; a *= 0.5; }
+	          return v;
+	        }
+
+	        void main() {
+	          vec2 uv = v_uv;
+	          float aspect = u_res.x / max(1.0, u_res.y);
+	          vec2 p = (uv*2.0-1.0);
+	          p.x *= aspect;
+
+	          vec2 m = (u_mouse*2.0-1.0);
+	          m.x *= aspect;
+	          float md = smoothstep(1.8, 0.0, length(p-m));
+	          vec2 pm = p + (p-m)*md*0.014;
+	          float ts = u_time * 0.038;  /* very slow — cinematic pacing */
+
+	          /* ── Palette: user's exact hex → linear HDR ──────────────── */
+	          vec3 kBlack  = vec3(0.020, 0.020, 0.018);  /* #050505 */
+	          vec3 kOlive1 = vec3(0.169, 0.200, 0.157);  /* #2B3328 */
+	          vec3 kOlive2 = vec3(0.231, 0.275, 0.216);  /* #3B4637 */
+	          vec3 kGold1  = vec3(0.80,  0.44,  0.11);   /* → #A8844A after tonemapping */
+	          vec3 kGold2  = vec3(0.96,  0.56,  0.16);   /* → #B99863 after tonemapping */
+	          vec3 kBronze = vec3(0.44,  0.24,  0.07);   /* → #7A5636 after tonemapping */
+
+	          /* ── Mesh gradient background — 5 dark animated poles ─────── */
+	          vec2 mp = m * 0.04;
+	          float a = aspect;
+	          float cs = 0.5 + 0.5*sin(ts*0.10 + 0.8);
+
+	          vec2 q0 = vec2(-0.80*a+0.32*a*sin(ts*0.40+0.0),  0.68+0.28*cos(ts*0.33+1.0))+mp*0.80;
+	          vec2 q1 = vec2( 0.18*a+0.42*a*cos(ts*0.28+2.1), -0.52+0.38*sin(ts*0.24+0.5))+mp*0.50;
+	          vec2 q2 = vec2(-0.08*a+0.52*a*sin(ts*0.21+1.2),  0.05+0.44*cos(ts*0.27+0.8))+mp*0.60;
+	          vec2 q3 = vec2( 0.68*a+0.26*a*cos(ts*0.36+2.5),  0.78+0.20*sin(ts*0.31+1.5))+mp*0.30;
+	          vec2 q4 = vec2(-0.58*a+0.20*a*sin(ts*0.44+3.1), -0.82+0.26*cos(ts*0.40+2.0))+mp*0.70;
+
+	          vec3 pc0 = mix(kOlive1, kOlive2, cs);
+	          vec3 pc1 = mix(kBronze, kOlive1, 0.5);
+	          vec3 pc2 = kOlive2;
+	          vec3 pc3 = kBlack;
+	          vec3 pc4 = mix(kOlive1, kBlack, 0.6);
+
+	          float fbmMod = fbm(pm*0.50 + ts*0.025);
+	          vec2 warpOff = vec2(fbm(pm*0.65+ts*0.016), fbm(pm*0.65-ts*0.013)) * 0.32;
+	          vec2 gp = pm + warpOff;
+
+	          float e = 0.0005;
+	          float w0 = 1.0/max(dot(gp-q0,gp-q0),e);
+	          float w1 = 1.0/max(dot(gp-q1,gp-q1),e);
+	          float w2 = 1.0/max(dot(gp-q2,gp-q2),e);
+	          float w3 = 1.0/max(dot(gp-q3,gp-q3),e);
+	          float w4 = 1.0/max(dot(gp-q4,gp-q4),e);
+	          float wT = w0+w1+w2+w3+w4;
+
+	          vec3 bgGrad = (pc0*w0+pc1*w1+pc2*w2+pc3*w3+pc4*w4)/wT;
+	          bgGrad *= 0.55 + 0.45*fbmMod;
+
+	          /* ── Lava lamp metaballs — dark bodies, cinematic gold rim ── */
+	          /* Blob time — slightly different pacing from gradient */
+	          float bt = ts * 0.68;
+
+	          /* Pulsating blob radii — organic breathing */
+	          float rad = 0.36;
+	          float R0 = rad * (1.0 + 0.08*sin(bt*0.70+0.0));
+	          float R1 = rad * (1.0 + 0.10*sin(bt*0.92+1.2));
+	          float R2 = rad * 0.82 * (1.0 + 0.07*sin(bt*0.62+2.4));
+	          float R3 = rad * 1.22 * (1.0 + 0.09*sin(bt*0.80+3.6));
+	          float R4 = rad * 0.68 * (1.0 + 0.11*sin(bt*1.06+4.8));
+
+	          /* Blob positions — slow vertical + horizontal lava lamp drift */
+	          vec2 b0 = vec2( 0.50*a+0.18*a*sin(bt*0.22+0.0), -0.08+0.28*cos(bt*0.18+1.0));
+	          vec2 b1 = vec2(-0.42*a+0.22*a*cos(bt*0.28+2.1),  0.52+0.32*sin(bt*0.24+0.5));
+	          vec2 b2 = vec2( 0.08*a+0.32*a*sin(bt*0.20+1.2),  0.12+0.42*cos(bt*0.16+2.3));
+	          vec2 b3 = vec2( 0.78*a+0.12*a*cos(bt*0.34+0.8), -0.62+0.22*sin(bt*0.29+1.8));
+	          vec2 b4 = vec2(-0.22*a+0.26*a*sin(bt*0.40+3.5), -0.38+0.36*cos(bt*0.36+0.2));
+
+	          /* Anisotropic distance — horizontal squeeze → wave-like elongated blobs */
+	          vec2 d0=(pm-b0)*vec2(0.72,1.0); float d0sq=dot(d0,d0);
+	          vec2 d1=(pm-b1)*vec2(0.76,1.0); float d1sq=dot(d1,d1);
+	          vec2 d2=(pm-b2)*vec2(0.68,1.0); float d2sq=dot(d2,d2);
+	          vec2 d3=(pm-b3)*vec2(0.80,1.0); float d3sq=dot(d3,d3);
+	          vec2 d4=(pm-b4)*vec2(0.74,1.0); float d4sq=dot(d4,d4);
+
+	          /* Potential field — classic metaball: Σ r²/d² */
+	          float field = 0.0;
+	          field += R0*R0/max(d0sq,0.0002);
+	          field += R1*R1/max(d1sq,0.0002);
+	          field += R2*R2/max(d2sq,0.0002);
+	          field += R3*R3/max(d3sq,0.0002);
+	          field += R4*R4/max(d4sq,0.0002);
+
+	          /* FBM warp on field — organic non-circular blob shapes */
+	          float fWarp = fbm(pm*0.82 + vec2(field*0.22, ts*0.020)) * 0.26;
+	          field += fWarp;
+
+	          /* Blob fill: inside (field>1) → near-zero → transparent → shows #050505 bg */
+	          float blobFill = smoothstep(0.82, 1.10, field);
+
+	          /* Rim glow: Gaussian peak at field≈0.88 (blob boundary) */
+	          float rimGlow = exp(-pow((field - 0.88) * 4.2, 2.0));
+	          rimGlow *= 1.0 - blobFill * 0.55;
+
+	          /* Junction glow: warm olive aura between blobs in close proximity */
+	          float jGlow = smoothstep(0.38, 0.72, field) * (1.0 - smoothstep(0.72, 0.90, field));
+
+	          /* ── Compose ─────────────────────────────────────────────── */
+	          vec3 col = bgGrad;
+	          col *= 1.0 - blobFill * 0.98;          /* interior → near-black */
+	          col += kGold1  * rimGlow * 0.72;        /* primary gold rim */
+	          col += kGold2  * rimGlow * pow(fbmMod,2.0) * 0.28; /* FBM-varied gold accent */
+	          col += kBronze * rimGlow * blobFill * 0.38; /* bronze at inner edge */
+	          col += kOlive2 * jGlow   * 0.48;        /* olive junction atmosphere */
+
+	          /* ── Post-processing ─────────────────────────────────────── */
+	          /* Bloom — only for bright rim zones */
+	          float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
+	          col += col * smoothstep(0.46, 0.78, luma) * 0.09;
+
+	          /* Cinematic vignette — strong dark push at edges */
+	          float vign = smoothstep(1.92, 0.26, length((uv-0.5)*vec2(aspect*0.80, 1.0)));
+	          col *= 0.10 + 0.90*vign;
+
+	          /* Film grain — slightly visible for cinematic feel */
+	          float fr = floor(u_time*22.0);
+	          col += (fract(sin(dot(uv*1234.5+fr*17.3, vec2(127.1,311.7)))*43758.5)-0.5)*0.024;
+
+	          /* Reinhard(0.95) — heavy compression for dark muted luxury */
+	          col = max(col, vec3(0.0));
+	          col = col / (col + vec3(0.95));
+	          col = pow(col, vec3(1.0/2.2));
+
+	          gl_FragColor = vec4(col, 1.0);
+	        }
+	      `;
+
+	      function compile(type, src){
+	        const s = gl.createShader(type);
+	        gl.shaderSource(s, src);
+	        gl.compileShader(s);
+	        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+	          console.error(gl.getShaderInfoLog(s));
+	          gl.deleteShader(s);
+	          return null;
+	        }
+	        return s;
+	      }
+
+	      const vs = compile(gl.VERTEX_SHADER, vsrc);
+	      const fs = compile(gl.FRAGMENT_SHADER, fsrc);
+	      if (!vs || !fs) return;
+
+	      const prog = gl.createProgram();
+	      gl.attachShader(prog, vs);
+	      gl.attachShader(prog, fs);
+	      gl.linkProgram(prog);
+	      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+	        console.error(gl.getProgramInfoLog(prog));
+	        return;
+	      }
+	      gl.useProgram(prog);
+
+	      const buf = gl.createBuffer();
+	      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+	      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+	      const locPos = gl.getAttribLocation(prog, 'a_pos');
+	      gl.enableVertexAttribArray(locPos);
+	      gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, 0, 0);
+
+	      const uRes = gl.getUniformLocation(prog, 'u_res');
+	      const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+	      const uTime = gl.getUniformLocation(prog, 'u_time');
+
+	      let mouse = [0.5, 0.5];
+	      window.addEventListener('pointermove', (e) => {
+	        mouse = [e.clientX / window.innerWidth, 1.0 - (e.clientY / window.innerHeight)];
+	      }, { passive: true });
+
+	      function resize(){
+	        const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+	        canvas.width = Math.floor(window.innerWidth * dpr);
+	        canvas.height = Math.floor(window.innerHeight * dpr);
+	        canvas.style.width = '100%';
+	        canvas.style.height = '100%';
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        gl.uniform2f(uRes, canvas.width, canvas.height);
+	      }
+	      resize();
+	      window.addEventListener('resize', resize, { passive: true });
+
+	      const t0 = performance.now();
+	      function frame(now){
+	        const t = (now - t0) / 1000;
+	        gl.uniform1f(uTime, t);
+	        gl.uniform2f(uMouse, mouse[0], mouse[1]);
+	        gl.drawArrays(gl.TRIANGLES, 0, 6);
+	        requestAnimationFrame(frame);
+	      }
+	      requestAnimationFrame(frame);
+	    }
+
+    function initSphereClick() {
+      const sphere = document.querySelector('.sphere');
+      if (!sphere) return;
+      sphere.addEventListener('click', () => {
+        sphere.classList.remove('sphere-lit');
+        void sphere.offsetWidth; // reflow to restart animation
+        sphere.classList.add('sphere-lit');
+        setTimeout(() => sphere.classList.remove('sphere-lit'), 750);
+      });
+    }
+
+    function initBgDimmer() {
+      const hero = document.getElementById('hero-screen');
+      const blobContainer = document.querySelector('.blob-container');
+      if (!hero || !blobContainer) return;
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          blobContainer.classList.toggle('bg-dimmed', !entry.isIntersecting);
+        });
+      }, { threshold: 0.05 });
+      obs.observe(hero);
+    }
+
+	    function handleDashMonthChange() {
+	      const dashMonth = document.getElementById('dashMonth').value;
+	      const bookingsMonth = document.getElementById('bookingsMonth');
+	      if (bookingsMonth && dashMonth && bookingsMonth.value !== dashMonth) bookingsMonth.value = dashMonth;
+	      updateDashboard();
+	      renderBookingsTable();
+	      updateCierreTab();
+	    }
+
+	    function handleBookingsMonthChange() {
+	      const bookingsMonthVal = document.getElementById('bookingsMonth').value;
+	      const dashMonth = document.getElementById('dashMonth');
+	      if (dashMonth && bookingsMonthVal && dashMonth.value !== bookingsMonthVal) dashMonth.value = bookingsMonthVal;
+	      renderBookingsTable();
+	      updateDashboard();
+	      updateCierreTab();
+	    }
+
+    function initReveals() {
+      // Only apply reveal animation to elements outside of tabs
+      const targets = [...document.querySelectorAll('.kpi-card, .chart-card, .content-divider, .form-grid, .table-container')]
+        .filter(el => !el.closest('.tab'));
+      if (!targets.length) return;
+      targets.forEach(el => el.classList.add('reveal'));
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+      }, { threshold: 0.05 });
+      targets.forEach(el => io.observe(el));
+    }
+
+    // loadClosures / saveClosures defined above (use closuresCache)
+
+	    function updateReportGate() {
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      const closures = loadClosures();
+	      const hasClosure = !!(monthStr && closures[monthStr]);
+	      const btnDashPDF = document.getElementById('btnDashPDF');
+	      const btnDashExcel = document.getElementById('btnDashExcel');
+	      const dashHint = document.getElementById('dashReportHint');
+	      if (btnDashPDF) btnDashPDF.disabled = !hasClosure;
+	      if (btnDashExcel) btnDashExcel.disabled = !hasClosure;
+	      if (dashHint) dashHint.textContent = hasClosure ? 'Cierre encontrado. Puedes generar PDF/Excel.' : 'Guarda el cierre del mes primero para habilitar los reportes.';
+	    }
+
+	    function initSupabaseAuthUI() {
+	      if (!USE_SUPABASE) {
+	        updateAuthPill(true);
+	        return;
+	      }
+	      supabase.auth.getSession().then(({ data }) => {
+	        updateAuthPill(!!data?.session);
+	      }).catch(() => updateAuthPill(false));
+
+	      supabase.auth.onAuthStateChange((_event, session) => {
+	        updateAuthPill(!!session);
+	        if (session) hydrateFromSupabase();
+	      });
+	    }
+
+	    function updateAuthPill(isAuthed) {
+	      const loginScreen = document.getElementById('login-screen');
+	      const pill = document.getElementById('authPill');
+	      const btnSignOut = document.getElementById('btnSignOut');
+	      if (pill) pill.style.display = isAuthed ? '' : 'none';
+	      if (btnSignOut) btnSignOut.style.display = isAuthed ? '' : 'none';
+	      if (!loginScreen) return;
+	      if (isAuthed) {
+	        clearTimeout(_showLoginTimer);
+	        loginScreen.classList.add('hidden');
+	      } else {
+	        // Debounce: Supabase fires SIGNED_OUT before SIGNED_IN on magic-link redirect.
+	        // Only reveal the login screen if no authenticated signal arrives within 600ms.
+	        _showLoginTimer = setTimeout(() => loginScreen.classList.remove('hidden'), 600);
+	      }
+	    }
+
+	    async function loginWithEmail() {
+	      const email = document.getElementById('loginEmail')?.value?.trim();
+	      const hint = document.getElementById('loginHint');
+	      if (!email) { if (hint) hint.textContent = 'Ingresa tu correo.'; return; }
+	      if (!USE_SUPABASE) { if (hint) hint.textContent = getSupabaseStatusText(); return; }
+	      if (hint) hint.textContent = 'Enviando link…';
+	      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+	      if (error) { if (hint) hint.textContent = `Error: ${error.message}`; return; }
+	      if (hint) hint.textContent = 'Link enviado. Revisa tu correo y abre el enlace.';
+	    }
+
+	    async function getSupabaseSession() {
+	      if (!USE_SUPABASE) return null;
+	      try {
+	        const { data } = await supabase.auth.getSession();
+	        return data?.session || null;
+	      } catch {
+	        return null;
+	      }
+	    }
+
+
+	    async function supabaseSignOut() {
+	      if (!USE_SUPABASE) return;
+	      await supabase.auth.signOut();
+	      document.getElementById('loginEmail') && (document.getElementById('loginEmail').value = '');
+	      document.getElementById('loginHint') && (document.getElementById('loginHint').textContent = '');
+	      updateAuthPill(false);
+	    }
+
+	    async function hydrateFromSupabase() {
+	      try {
+	        const { data: sess } = await supabase.auth.getSession();
+	        if (!sess?.session) return;
+
+	        const [bRes, eRes, cRes, sRes] = await Promise.all([
+	          supabase.from('bookings').select('id,check_in,check_out,nights,guest_name,income_usd').order('check_in', { ascending: true }),
+	          supabase.from('expenses').select('id,date,category,amount_cop,notes').order('date', { ascending: true }),
+	          supabase.from('closures').select('*'),
+	          supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+	        ]);
+
+	        if (bRes.error) throw bRes.error;
+	        if (eRes.error) throw eRes.error;
+	        if (cRes.error) throw cRes.error;
+	        if (sRes.error) throw sRes.error;
+
+	        bookings = (bRes.data || []).map(r => normalizeBooking({
+	          id: r.id,
+	          check_in: r.check_in,
+	          check_out: r.check_out,
+	          nights: r.nights,
+	          guest_name: r.guest_name,
+	          income_usd: r.income_usd
+	        })).filter(Boolean);
+
+	        expenses = (eRes.data || []).map(r => normalizeExpense({
+	          id: r.id,
+	          date: r.date,
+	          category: r.category,
+	          amount_cop: r.amount_cop,
+	          notes: r.notes
+	        })).filter(Boolean);
+
+	        // closures stored in localStorage as { [YYYY-MM]: closure }
+	        const closures = {};
+	        for (const r of (cRes.data || [])) {
+	          const key = String(r.id || r.month_str || '');
+	          if (!key) continue;
+	          closures[key] = {
+	            monthStr: r.month_str || key,
+	            trm: r.trm,
+	            totalIncomeUsd: Number(r.total_income_usd || 0),
+	            grossCop: Number(r.gross_cop || 0),
+	            feesCop: Number(r.fees_cop || 0),
+	            netIncomeCop: Number(r.net_income_cop || 0),
+	            totalExpensesCop: Number(r.total_expenses_cop || 0),
+	            netAfterExpenses: Number(r.net_after_expenses || 0),
+	            nicolas: Number(r.nicolas || 0),
+	            carolina: Number(r.carolina || 0),
+	            savedAt: r.created_at || null
+	          };
+	        }
+	        saveClosures(closures);
+
+	        const s = sRes.data || null;
+	        if (s) {
+	          settings = {
+	            exchangeRate: Number(s.exchange_rate ?? DEFAULT_SETTINGS.exchangeRate) || DEFAULT_SETTINGS.exchangeRate,
+	            airbnbFeePct: Number(s.airbnb_fee_pct ?? DEFAULT_SETTINGS.airbnbFeePct) || DEFAULT_SETTINGS.airbnbFeePct,
+	            hostFeePct: Number(s.host_fee_pct ?? DEFAULT_SETTINGS.hostFeePct) || DEFAULT_SETTINGS.hostFeePct,
+	            minNightsProfit: Number(s.min_nights_profit ?? DEFAULT_SETTINGS.minNightsProfit) || DEFAULT_SETTINGS.minNightsProfit,
+	            incomeSplitNicolas: Number(s.income_split_nicolas ?? DEFAULT_SETTINGS.incomeSplitNicolas) || DEFAULT_SETTINGS.incomeSplitNicolas,
+	            expenseSplitNicolas: Number(s.expense_split_nicolas ?? DEFAULT_SETTINGS.expenseSplitNicolas) || DEFAULT_SETTINGS.expenseSplitNicolas
+	          };
+	          saveSettings();
+	        } else {
+	          // Create shared settings row (id=1) if missing
+	          await supabase.from('settings').upsert({
+	            id: 1,
+	            exchange_rate: settings.exchangeRate,
+	            airbnb_fee_pct: settings.airbnbFeePct,
+	            host_fee_pct: settings.hostFeePct,
+	            min_nights_profit: settings.minNightsProfit,
+	            income_split_nicolas: settings.incomeSplitNicolas,
+	            expense_split_nicolas: settings.expenseSplitNicolas
+	          }, { onConflict: 'id' });
+	        }
+
+	        // ── Dedup: remove duplicate bookings/expenses in Supabase ──────
+	        const _bSeen = new Map();
+	        const _eSeen = new Map();
+	        const _bDel = [], _eDel = [];
+	        for (const b of bookings) {
+	          const k = b.checkIn + '|' + b.guestName.toLowerCase();
+	          if (_bSeen.has(k)) _bDel.push(b.id); else _bSeen.set(k, b.id);
+	        }
+	        for (const e of expenses) {
+	          const k = e.date + '|' + (e.category || '').toLowerCase() + '|' + Math.round(e.amountCop);
+	          if (_eSeen.has(k)) _eDel.push(e.id); else _eSeen.set(k, e.id);
+	        }
+	        if (_bDel.length) {
+	          bookings = bookings.filter(b => !_bDel.includes(b.id));
+	          await Promise.all(_bDel.map(id => supabase.from('bookings').delete().eq('id', id)));
+	        }
+	        if (_eDel.length) {
+	          expenses = expenses.filter(e => !_eDel.includes(e.id));
+	          await Promise.all(_eDel.map(id => supabase.from('expenses').delete().eq('id', id)));
+	        }
+
+	        saveToLocalStorage(); // cache snapshot
+
+	        // ── Seed historical data once per session ────────────────────
+	        if (!_seedsApplied) {
+	          _seedsApplied = true;
+	          const _bBefore = bookings.length;
+	          const _eBefore = expenses.length;
+	          seedJanuaryExpenses(); seedJanuaryBookings();
+	          seedFebruaryExpenses(); seedFebruaryBookings();
+	          seedMarchExpenses(); seedMarchBookings();
+	          const newB = bookings.slice(_bBefore);
+	          const newE = expenses.slice(_eBefore);
+	          if (newB.length || newE.length) {
+	            saveToLocalStorage();
+	            await Promise.all([
+	              ...newB.map(b => persistBookingToSupabase(b).catch(e => console.error('booking seed:', e))),
+	              ...newE.map(e => persistExpenseToSupabase(e).catch(e => console.error('expense seed:', e))),
+	            ]);
+	          }
+	        }
+
+	        syncSettingsToUI();
+	        renderTables();
+	        updateDashboard();
+	        updateCierreTab();
+	      } catch (err) {
+	        console.error(err);
+	        alert(`No pude cargar desde Supabase: ${err?.message || err}`);
+	      }
+	    }
+
+	    async function persistBookingToSupabase(booking) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const payload = {
+	        id: booking.id,
+	        check_in: booking.checkIn,
+	        check_out: booking.checkOut,
+	        nights: booking.nights,
+	        guest_name: booking.guestName,
+	        income_usd: booking.incomeUsd
+	      };
+	      const { error } = await supabase.from('bookings').upsert(payload);
+	      if (error) throw error;
+	    }
+
+	    async function deleteBookingFromSupabase(id) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const { error } = await supabase.from('bookings').delete().eq('id', id);
+	      if (error) throw error;
+	    }
+
+	    async function persistExpenseToSupabase(expense) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const payload = {
+	        id: expense.id,
+	        date: expense.date,
+	        category: expense.category,
+	        amount_cop: expense.amountCop,
+	        notes: expense.notes || null
+	      };
+	      const { error } = await supabase.from('expenses').upsert(payload);
+	      if (error) throw error;
+	    }
+
+	    async function deleteExpenseFromSupabase(id) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const { error } = await supabase.from('expenses').delete().eq('id', id);
+	      if (error) throw error;
+	    }
+
+	    async function persistClosureToSupabase(monthStr, closure) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const payload = {
+	        id: monthStr,
+	        month_str: closure.monthStr || monthStr,
+	        trm: closure.trm,
+	        total_income_usd: closure.totalIncomeUsd,
+	        gross_cop: Math.round(closure.grossCop),
+	        fees_cop: Math.round(closure.feesCop),
+	        net_income_cop: Math.round(closure.netIncomeCop),
+	        total_expenses_cop: Math.round(closure.totalExpensesCop),
+	        net_after_expenses: Math.round(closure.netAfterExpenses),
+	        nicolas: Math.round(closure.nicolas),
+	        carolina: Math.round(closure.carolina)
+	      };
+	      const { error } = await supabase.from('closures').upsert(payload);
+	      if (error) throw error;
+	    }
+
+	    async function deleteClosureFromSupabase(monthStr) {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const { error } = await supabase.from('closures').delete().eq('id', monthStr);
+	      if (error) throw error;
+	    }
+
+	    async function persistSettingsToSupabase() {
+	      const session = await getSupabaseSession();
+	      if (!session) return;
+	      const payload = {
+	        id: 1,
+	        exchange_rate: settings.exchangeRate,
+	        airbnb_fee_pct: settings.airbnbFeePct,
+	        host_fee_pct: settings.hostFeePct,
+	        min_nights_profit: settings.minNightsProfit,
+	        income_split_nicolas: settings.incomeSplitNicolas,
+	        expense_split_nicolas: settings.expenseSplitNicolas
+	      };
+	      const { error } = await supabase.from('settings').upsert(payload, { onConflict: 'id' });
+	      if (error) throw error;
+	    }
+
+
+    function parseDateInput(dateStr) {
+      if (!dateStr || !dateStr.includes('-')) return null;
+      const [y, m, d] = dateStr.split('-').map(Number);
+      if (!y || !m || !d) return null;
+      return new Date(y, m - 1, d);
+    }
+
+	    function addBooking() {
+	      try {
+        const checkInStr = document.getElementById('checkIn').value;
+        const checkOutStr = document.getElementById('checkOut').value;
+        const guestName = document.getElementById('guestName').value?.trim();
+        const incomeRaw = String(document.getElementById('incomeUsd').value || '').trim().replace(',', '.');
+        const incomeUsd = parseFloat(incomeRaw);
+
+        if (!checkInStr || !checkOutStr || !guestName || !Number.isFinite(incomeUsd)) {
+          alert('Completa Check-in, Check-out, Huésped e Ingreso (USD).');
+          return;
+        }
+
+        const checkIn = parseDateInput(checkInStr);
+        const checkOut = parseDateInput(checkOutStr);
+        if (!checkIn || !checkOut) {
+          alert('Fechas inválidas.');
+          return;
+        }
+        const diffDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+        const nights = Math.round(diffDays);
+        if (!Number.isFinite(diffDays) || diffDays <= 0 || nights <= 0) {
+          alert('Revisa las fechas: Check-out debe ser después de Check-in.');
+          return;
+        }
+
+	        bookings.push({
+	          id: makeId(),
+	          checkIn: checkInStr,
+	          checkOut: checkOutStr,
+	          nights,
+	          guestName,
+	          incomeUsd
+	        });
+	        saveToLocalStorage();
+	        if (USE_SUPABASE) persistBookingToSupabase(bookings[bookings.length - 1]).catch(err => console.error(err));
+	        renderTables();
+	        updateDashboard();
+	        clearBookingForm();
+	      } catch (err) {
+	        alert(`Error agregando reserva: ${err?.message || err}`);
+      }
+    }
+
+    function clearBookingForm() {
+      document.getElementById('checkIn').value = '';
+      document.getElementById('checkOut').value = '';
+      document.getElementById('guestName').value = '';
+      document.getElementById('incomeUsd').value = '';
+    }
+
+	    function deleteBooking(id) {
+	      const targetId = String(id);
+	      if (confirm('¿Eliminar esta reserva?')) {
+	        bookings = bookings.filter(b => String(b.id) !== targetId);
+	        saveToLocalStorage();
+	        if (USE_SUPABASE) deleteBookingFromSupabase(targetId).catch(err => console.error(err));
+	        renderTables();
+	        updateDashboard();
+	        updateCierreTab();
+	      }
+	    }
+
+	    function renderTables() {
+	      renderBookingsTable();
+	      renderExpensesTable();
+	    }
+
+	    function renderBookingsTable() {
+      const tbody = document.querySelector('#bookingsTable tbody');
+      tbody.innerHTML = '';
+      const monthStr = document.getElementById('bookingsMonth')?.value || document.getElementById('dashMonth')?.value;
+      const pill = document.getElementById('bookingsMonthPill');
+      const summary = document.getElementById('bookingsMonthSummary');
+      if (pill && monthStr) {
+        const [y, m] = monthStr.split('-').map(Number);
+        const label = new Date(y, m - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+        pill.textContent = `Viendo: ${label}`;
+      }
+
+      const visible = monthStr
+        ? bookings.filter(b => b.checkIn && b.checkIn.startsWith(monthStr.slice(0, 7)))
+        : bookings;
+
+      if (summary) {
+        const nights = visible.reduce((s, b) => s + (b.nights || 0), 0);
+        const usd = visible.reduce((s, b) => s + (b.incomeUsd || 0), 0);
+        summary.textContent = `Reservas: ${visible.length} • Noches: ${nights} • USD: $${usd.toFixed(2)}`;
+      }
+
+      if (visible.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Sin reservas</td></tr>';
+        return;
+      }
+	      visible
+	        .slice()
+	        .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn))
+	        .forEach(booking => {
+	        const row = `
+	          <tr>
+	            <td>${booking.checkIn}</td>
+	            <td>${booking.checkOut}</td>
+	            <td>${booking.nights}</td>
+	            <td>${booking.guestName}</td>
+	            <td>$${booking.incomeUsd.toFixed(2)}</td>
+	            <td><button class="btn-danger" onclick="deleteBooking('${String(booking.id).replace(/'/g, '&#39;')}')">Eliminar</button></td>
+	          </tr>
+	        `;
+	        tbody.insertAdjacentHTML('beforeend', row);
+	      });
+	    }
+
+	    function addExpense() {
+	      try {
+	        const dateStr = document.getElementById('expenseDate')?.value;
+	        const category = document.getElementById('expenseCategory')?.value?.trim();
+	        const amountRaw = String(document.getElementById('expenseAmountCop')?.value || '').trim();
+	        const amountCop = Math.round(Number(amountRaw));
+	        const notes = document.getElementById('expenseNotes')?.value?.trim() || '';
+
+	        if (!dateStr || !category || !Number.isFinite(amountCop) || amountCop <= 0) {
+	          alert('Completa Fecha, Categoría y Monto (COP).');
+	          return;
+	        }
+
+	        expenses.push({ id: makeId(), date: dateStr, category, amountCop, notes });
+	        saveToLocalStorage();
+	        if (USE_SUPABASE) persistExpenseToSupabase(expenses[expenses.length - 1]).catch(err => console.error(err));
+	        renderExpensesTable();
+	        updateDashboard();
+	        updateCierreTab();
+
+	        const d = document.getElementById('expenseDate'); if (d) d.value = '';
+	        const c = document.getElementById('expenseCategory'); if (c) c.value = '';
+	        const a = document.getElementById('expenseAmountCop'); if (a) a.value = '';
+	        const n = document.getElementById('expenseNotes'); if (n) n.value = '';
+	      } catch (err) {
+	        alert(`Error agregando gasto: ${err?.message || err}`);
+	      }
+	    }
+
+	    function deleteExpense(id) {
+	      const targetId = String(id);
+	      if (!confirm('¿Eliminar este gasto?')) return;
+	      expenses = expenses.filter(e => String(e.id) !== targetId);
+	      saveToLocalStorage();
+	      if (USE_SUPABASE) deleteExpenseFromSupabase(targetId).catch(err => console.error(err));
+	      renderExpensesTable();
+	      updateDashboard();
+	      updateCierreTab();
+	    }
+
+	    function renderExpensesTable() {
+	      const tableBody = document.querySelector('#expensesTable tbody');
+	      if (!tableBody) return;
+	      tableBody.innerHTML = '';
+
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      const pill = document.getElementById('expensesMonthPill');
+	      const summary = document.getElementById('expensesMonthSummary');
+
+	      if (pill && monthStr) {
+	        const [y, m] = monthStr.split('-').map(Number);
+	        const label = new Date(y, m - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+	        pill.textContent = `Mes: ${label}`;
+	      }
+
+	      const visible = monthStr
+	        ? expenses.filter(e => String(e.date || '').startsWith(monthStr))
+	        : expenses;
+
+	      const total = visible.reduce((s, e) => s + (Number(e.amountCop) || 0), 0);
+	      if (summary) summary.textContent = `Gastos: ${visible.length} • COP: $${Math.round(total).toLocaleString('es-CO')}`;
+
+	      if (visible.length === 0) {
+	        tableBody.innerHTML = '<tr><td colspan="5" class="no-data">Sin gastos</td></tr>';
+	        return;
+	      }
+
+	      visible
+	        .slice()
+	        .sort((a, b) => new Date(a.date) - new Date(b.date))
+	        .forEach(exp => {
+	          const safeId = String(exp.id).replace(/'/g, '&#39;');
+	          const row = `
+	            <tr>
+	              <td>${exp.date}</td>
+	              <td>${exp.category}</td>
+	              <td>$${Math.round(exp.amountCop).toLocaleString('es-CO')}</td>
+	              <td>${exp.notes || ''}</td>
+	              <td><button class="btn-danger" onclick="deleteExpense('${safeId}')">Eliminar</button></td>
+	            </tr>
+	          `;
+	          tableBody.insertAdjacentHTML('beforeend', row);
+	        });
+	    }
+
+	    function downloadExpensesJSON() {
+	      const payload = {
+	        version: 1,
+	        exportedAt: new Date().toISOString().slice(0, 10),
+	        bookings,
+	        expenses
+	      };
+	      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+	      const a = document.createElement('a');
+	      a.href = URL.createObjectURL(blob);
+	      a.download = `apto_urban_960_${payload.exportedAt}.json`;
+	      document.body.appendChild(a);
+	      a.click();
+	      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+	    }
+
+	    async function handleImportJSON(file) {
+	      try {
+	        if (!file) return;
+	        const raw = await file.text();
+	        const parsed = JSON.parse(raw);
+	        const incomingBookings = Array.isArray(parsed?.bookings) ? parsed.bookings : [];
+	        const incomingExpenses = Array.isArray(parsed?.expenses) ? parsed.expenses : [];
+
+	        const normB = incomingBookings.map(normalizeBooking).filter(Boolean);
+	        const normE = incomingExpenses.map(normalizeExpense).filter(Boolean);
+
+	        // Merge + dedupe (bookings: checkIn+guestName+incomeUsd; expenses: date+category+amountCop)
+	        const mergedBookings = [...bookings, ...normB];
+	        const seenB = new Set();
+	        bookings = mergedBookings.filter(b => {
+	          const key = `${b.checkIn}|${(b.guestName || '').trim().toLowerCase()}|${Number(b.incomeUsd).toFixed(2)}`;
+	          if (seenB.has(key)) return false;
+	          seenB.add(key);
+	          return true;
+	        });
+
+	        const mergedExpenses = [...expenses, ...normE];
+	        const seenE = new Set();
+	        expenses = mergedExpenses.filter(e => {
+	          const key = `${e.date}|${(e.category || '').trim().toLowerCase()}|${Math.round(Number(e.amountCop) || 0)}`;
+	          if (seenE.has(key)) return false;
+	          seenE.add(key);
+	          return true;
+	        });
+
+	        saveToLocalStorage();
+	        renderTables();
+	        updateDashboard();
+	        updateCierreTab();
+	        alert(`Importado: ${normB.length} reservas, ${normE.length} gastos.`);
+	      } catch (err) {
+	        alert(`Error importando JSON: ${err?.message || err}`);
+	      } finally {
+	        const input = document.getElementById('importJsonInput');
+	        if (input) input.value = '';
+	      }
+	    }
+
+
+    function switchTab(tab, evt) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.app-nav-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.querySelectorAll(`.app-nav-item[data-tab="${tab}"]`).forEach(b => b.classList.add('active'));
+    }
+
+	    function goToApp(tabName, sectionId) {
+	      document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
+	      switchTab(tabName);
+	      if (!sectionId) return;
+	      // Allow DOM to update tab visibility before scrolling
+	      setTimeout(() => {
+	        const el = document.getElementById(sectionId);
+	        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	      }, 50);
+	    }
+
+	    function setCurrentMonth() {
+	      const today = new Date();
+	      const year = today.getFullYear();
+	      const month = String(today.getMonth() + 1).padStart(2, '0');
+	      const ms = `${year}-${month}`;
+	      document.getElementById('dashMonth').value = ms;
+	      const bookingsMonth = document.getElementById('bookingsMonth');
+	      if (bookingsMonth) bookingsMonth.value = ms;
+	    }
+
+	    function getExchangeRateForMonth(monthStr) {
+	      const closures = loadClosures();
+	      const trm = closures?.[monthStr]?.trm;
+	      const n = Number(trm);
+	      return Number.isFinite(n) && n > 0 ? n : settings.exchangeRate;
+	    }
+
+    function getDataForMonth(monthStr) {
+      if (!monthStr || !monthStr.includes('-')) return { monthBookings: [], monthExpenses: [] };
+      const prefix = monthStr.slice(0, 7); // 'YYYY-MM'
+      const monthBookings = bookings.filter(b => b.checkIn && b.checkIn.startsWith(prefix));
+      const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(prefix));
+      return { monthBookings, monthExpenses };
+    }
+
+    function daysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+	    function calculateKPIsForMonth(monthStr) {
+      if (!monthStr || !monthStr.includes('-')) {
+        return {
+          monthStr: monthStr || '',
+          totalIncomeUsd: 0,
+          totalIncomeCop: 0,
+          feesCop: 0,
+          netIncomeCop: 0,
+          totalExpensesCop: 0,
+          occupancyPct: 0,
+          adr: 0,
+          commissionNicolas: 0,
+          utilidadCarolina: 0,
+          net: 0,
+          totalNights: 0,
+          isRentable: false,
+          daysInMonth: 0,
+          monthBookings: [],
+          monthExpenses: []
+        };
+      }
+	      const { monthBookings, monthExpenses } = getDataForMonth(monthStr);
+	      const totalIncomeUsd = monthBookings.reduce((sum, b) => sum + b.incomeUsd, 0);
+	      const trm = getExchangeRateForMonth(monthStr);
+	      const totalIncomeCop = totalIncomeUsd * trm;
+	      const feesCop = totalIncomeCop * (settings.airbnbFeePct + settings.hostFeePct);
+	      const netIncomeCop = totalIncomeCop - feesCop;
+	      const totalExpensesCop = monthExpenses.reduce((sum, e) => sum + e.amountCop, 0);
+      const totalNights = monthBookings.reduce((sum, b) => sum + b.nights, 0);
+      const [year, month] = monthStr.split('-').map(Number);
+      const dim = daysInMonth(year, month - 1);
+      const occupancyPct = dim > 0 ? (totalNights / dim) * 100 : 0;
+      const adr = totalNights > 0 ? totalIncomeUsd / totalNights : 0;
+      const commissionNicolas = (netIncomeCop * settings.incomeSplitNicolas) - (totalExpensesCop * settings.expenseSplitNicolas);
+      const utilidadCarolina = (netIncomeCop * (1 - settings.incomeSplitNicolas)) - (totalExpensesCop * (1 - settings.expenseSplitNicolas));
+      const net = netIncomeCop - totalExpensesCop;
+      const isRentable = totalNights >= settings.minNightsProfit;
+
+      return {
+        monthStr,
+        totalIncomeUsd,
+        totalIncomeCop,
+        feesCop,
+        netIncomeCop,
+        totalExpensesCop,
+        occupancyPct,
+        adr,
+        commissionNicolas,
+        utilidadCarolina,
+        net,
+        totalNights,
+        isRentable,
+        daysInMonth: dim,
+        monthBookings,
+        monthExpenses
+      };
+    }
+
+    function calculateKPIs() {
+      const monthStr = document.getElementById('dashMonth').value;
+      return calculateKPIsForMonth(monthStr);
+    }
+
+    function getPrevMonthStr(monthStr) {
+      const [y, m] = monthStr.split('-').map(Number);
+      const d = new Date(y, m - 2, 1);
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${yy}-${mm}`;
+    }
+
+    function setDeltaBadge(elId, current, previous, kind = 'money') {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      if (!Number.isFinite(previous) || previous === null || previous === undefined) {
+        el.className = 'delta delta-flat';
+        el.textContent = '—';
+        return;
+      }
+      if (!Number.isFinite(current)) {
+        el.className = 'delta delta-flat';
+        el.textContent = '—';
+        return;
+      }
+      if (previous === 0) {
+        el.className = current === 0 ? 'delta delta-flat' : 'delta delta-up';
+        el.textContent = current === 0 ? '0%' : 'Nuevo';
+        return;
+      }
+      const pct = ((current - previous) / Math.abs(previous)) * 100;
+      const sign = pct > 0 ? '+' : '';
+      const label = kind === 'pct' ? `${sign}${pct.toFixed(1)}%` : `${sign}${pct.toFixed(0)}%`;
+      if (Math.abs(pct) < 0.05) {
+        el.className = 'delta delta-flat';
+        el.textContent = '0%';
+        return;
+      }
+      el.className = pct > 0 ? 'delta delta-up' : 'delta delta-down';
+      el.textContent = label;
+    }
+
+    function setKpi(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+	    function updateDashboard() {
+      const kpis = calculateKPIs();
+      const prevStr = getPrevMonthStr(kpis.monthStr);
+      const prev = calculateKPIsForMonth(prevStr);
+
+      setKpi('kpiIncome', `$${Math.round(kpis.totalIncomeCop).toLocaleString('es-CO')}`);
+      setKpi('kpiExpenses', `$${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')}`);
+      setKpi('kpiFees', `$${Math.round(kpis.feesCop).toLocaleString('es-CO')}`);
+      setKpi('kpiNet', `$${Math.round(kpis.net).toLocaleString('es-CO')}`);
+      setKpi('kpiOccupancy', `${kpis.occupancyPct.toFixed(1)}%`);
+      setKpi('kpiCommission', `$${Math.round(kpis.commissionNicolas).toLocaleString('es-CO')}`);
+      setKpi('kpiAdr', `$${kpis.adr.toFixed(2)}`);
+
+      setDeltaBadge('kpiIncomeDelta', kpis.totalIncomeCop, prev.totalIncomeCop, 'money');
+      setDeltaBadge('kpiExpensesDelta', kpis.totalExpensesCop, prev.totalExpensesCop, 'money');
+      setDeltaBadge('kpiFeesDelta', kpis.feesCop, prev.feesCop, 'money');
+      setDeltaBadge('kpiNetDelta', kpis.net, prev.net, 'money');
+      setDeltaBadge('kpiOccupancyDelta', kpis.occupancyPct, prev.occupancyPct, 'pct');
+      setDeltaBadge('kpiCommissionDelta', kpis.commissionNicolas, prev.commissionNicolas, 'money');
+      setDeltaBadge('kpiAdrDelta', kpis.adr, prev.adr, 'pct');
+
+      const rentPill = document.getElementById('kpiRentability');
+      const nightsInfo = document.getElementById('kpiNightsInfo');
+      if (nightsInfo) nightsInfo.textContent = `Noches: ${kpis.totalNights} / ${kpis.daysInMonth}`;
+      if (rentPill) {
+        const ok = kpis.isRentable && kpis.net >= 0;
+        rentPill.className = `pill ${ok ? 'pill-success' : 'pill-warning'}`;
+        rentPill.textContent = ok ? `Rentable (≥${settings.minNightsProfit} noches)` : `No rentable (meta ≥${settings.minNightsProfit})`;
+      }
+	      updateReportGate();
+	      updateCharts();
+	    }
+
+	    function syncSettingsToUI() {
+	      const si = document.getElementById('settingsIncomeSplitNicolas');
+	      if (si) si.value = String(Math.round((settings.incomeSplitNicolas || 0) * 100));
+	      updateCarolinaPct();
+	      const closureTrm = document.getElementById('closureTrm');
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      if (closureTrm && monthStr) closureTrm.value = String(Math.round(getExchangeRateForMonth(monthStr) || settings.exchangeRate || 0));
+	    }
+
+	    function updateCarolinaPct() {
+	      const niPct = Number(document.getElementById('settingsIncomeSplitNicolas')?.value) || 0;
+	      const ca = document.getElementById('settingsCarolinaPct');
+	      if (ca) ca.value = String(Math.max(0, 100 - niPct));
+	    }
+
+	    function saveSettingsFromUI() {
+	      const si = Number(document.getElementById('settingsIncomeSplitNicolas')?.value);
+	      if (Number.isFinite(si) && si >= 0) {
+	        const split = Math.min(1, Math.max(0, si / 100));
+	        settings.incomeSplitNicolas = split;
+	        settings.expenseSplitNicolas = split;
+	      }
+	      saveSettings();
+	      if (USE_SUPABASE) persistSettingsToSupabase().catch(err => console.error(err));
+	      updateDashboard();
+	      updateCierreTab();
+	    }
+
+	    function calculateAndSaveClosure() {
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      if (!monthStr) return;
+	      const trmRaw = Number(document.getElementById('closureTrm')?.value);
+	      const trm = Number.isFinite(trmRaw) && trmRaw > 0 ? Math.round(trmRaw) : Math.round(settings.exchangeRate || 0);
+	      if (!Number.isFinite(trm) || trm <= 0) {
+	        alert('Ingresa una TRM válida.');
+	        return;
+	      }
+
+	      const { monthBookings, monthExpenses } = getDataForMonth(monthStr);
+	      const totalIncomeUsd = monthBookings.reduce((s, b) => s + (Number(b.incomeUsd) || 0), 0);
+	      const grossCop = totalIncomeUsd * trm;
+	      const feesCop = grossCop * (settings.airbnbFeePct + settings.hostFeePct);
+	      const netIncomeCop = grossCop - feesCop;
+	      const totalExpensesCop = monthExpenses.reduce((s, e) => s + (Number(e.amountCop) || 0), 0);
+	      const netAfterExpenses = netIncomeCop - totalExpensesCop;
+
+	      const incomePct = settings.incomeSplitNicolas;
+	      const expensePct = settings.expenseSplitNicolas;
+	      const nicolas = (netIncomeCop * incomePct) - (totalExpensesCop * expensePct);
+	      const carolina = (netIncomeCop * (1 - incomePct)) - (totalExpensesCop * (1 - expensePct));
+
+	      const closures = loadClosures();
+	      closures[monthStr] = {
+	        monthStr,
+	        trm,
+	        totalIncomeUsd: Math.round(totalIncomeUsd * 100) / 100,
+	        grossCop,
+	        feesCop,
+	        netIncomeCop,
+	        totalExpensesCop,
+	        netAfterExpenses,
+	        nicolas,
+	        carolina,
+	        savedAt: new Date().toISOString()
+	      };
+	      saveClosures(closures);
+	      if (USE_SUPABASE) persistClosureToSupabase(monthStr, closures[monthStr]).catch(err => console.error(err));
+	      updateDashboard();
+	      updateCierreTab();
+	    }
+
+	    function deleteClosureForMonth() {
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      if (!monthStr) return;
+	      const closures = loadClosures();
+	      if (!closures?.[monthStr]) {
+	        alert('No hay cierre guardado para este mes.');
+	        return;
+	      }
+	      if (!confirm('¿Eliminar el cierre guardado de este mes?')) return;
+	      delete closures[monthStr];
+	      saveClosures(closures);
+	      if (USE_SUPABASE) deleteClosureFromSupabase(monthStr).catch(err => console.error(err));
+	      updateDashboard();
+	      updateCierreTab();
+	    }
+
+	    function renderClosureTable() {
+	      const tbody = document.querySelector('#closureTable tbody');
+	      if (!tbody) return;
+	      tbody.innerHTML = '';
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      if (!monthStr) return;
+
+	      const closures = loadClosures();
+	      const closure = closures?.[monthStr];
+	      const kpis = calculateKPIsForMonth(monthStr);
+
+	      const rows = [];
+	      rows.push(['Ingresos (USD)', `$${kpis.totalIncomeUsd.toFixed(2)}`]);
+
+	      if (closure) {
+	        rows.push(['TRM cierre (COP/USD)', `$${Math.round(closure.trm).toLocaleString('es-CO')}`]);
+	        rows.push(['Ingresos brutos (COP)', `$${Math.round(closure.grossCop).toLocaleString('es-CO')}`]);
+	        const feesPct = (settings.airbnbFeePct + settings.hostFeePct) * 100;
+	        rows.push([`Fees (${feesPct.toFixed(1)}%)`, `$${Math.round(closure.feesCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Ingreso neto (COP)', `$${Math.round(closure.netIncomeCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Gastos (COP)', `$${Math.round(closure.totalExpensesCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(closure.netAfterExpenses).toLocaleString('es-CO')}`]);
+	        rows.push([`Nicolás (${Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.nicolas).toLocaleString('es-CO')}`]);
+	        rows.push([`Carolina (${100 - Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.carolina).toLocaleString('es-CO')}`]);
+	      } else {
+	        rows.push(['TRM', '—']);
+	        rows.push(['Ingresos brutos (COP)', '—']);
+	        rows.push(['Fees', '—']);
+	        rows.push(['Ingreso neto (COP)', '—']);
+	        rows.push(['Gastos (COP)', `$${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(kpis.net).toLocaleString('es-CO')}`]);
+	      }
+
+	      rows.forEach(([k, v]) => {
+	        tbody.insertAdjacentHTML('beforeend', `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`);
+	      });
+	    }
+
+	    function updateCierreTab() {
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      const closureMonthPill = document.getElementById('closureMonthPill');
+	      const closureStatusPill = document.getElementById('closureStatusPill');
+	      const closureSummary = document.getElementById('closureSummary');
+
+	      if (monthStr && closureMonthPill) {
+	        const [y, m] = monthStr.split('-').map(Number);
+	        const label = new Date(y, m - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+	        closureMonthPill.textContent = `Mes: ${label}`;
+	      }
+
+	      const closures = loadClosures();
+	      const hasClosure = !!(monthStr && closures?.[monthStr]);
+	      if (closureStatusPill) {
+	        closureStatusPill.className = `pill ${hasClosure ? 'pill-success' : 'pill-warning'}`;
+	        closureStatusPill.textContent = hasClosure ? 'Cierre guardado' : 'Sin cierre';
+	      }
+
+	      if (monthStr && closureSummary) {
+	        const kpis = calculateKPIsForMonth(monthStr);
+	        closureSummary.textContent = `USD: $${kpis.totalIncomeUsd.toFixed(2)} • Gastos: $${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')} COP`;
+	      }
+
+	      syncSettingsToUI();
+	      renderExpensesTable();
+	      renderClosureTable();
+	      updateReportGate();
+	    }
+
+    let netTrendChartInstance, incomeChartInstance, expensesChartInstance, occupancyChartInstance, commissionChartInstance;
+
+    function updateCharts() {
+      const kpis = calculateKPIs();
+      updateNetTrendChart(kpis.monthStr);
+      updateIncomeChart(kpis.monthBookings);
+      updateExpensesCategoryChart(kpis.monthExpenses);
+      updateOccupancyChart(kpis.occupancyPct);
+      updateCommissionChart(kpis.commissionNicolas, kpis.utilidadCarolina);
+    }
+
+    function updateNetTrendChart(selectedMonthStr) {
+      const ctx = document.getElementById('netTrendChart')?.getContext('2d');
+      if (!ctx) return;
+      if (netTrendChartInstance) netTrendChartInstance.destroy();
+
+      const [y, m] = selectedMonthStr.split('-').map(Number);
+      const months = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(y, (m - 1) - i, 1);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        months.push(`${d.getFullYear()}-${mm}`);
+      }
+      const labels = months.map(ms => {
+        const [yy, mm] = ms.split('-').map(Number);
+        return new Date(yy, mm - 1).toLocaleString('es-CO', { month: 'short' });
+      });
+      const netSeries = months.map(ms => calculateKPIsForMonth(ms).net);
+      const incomeSeries = months.map(ms => calculateKPIsForMonth(ms).netIncomeCop);
+      const expensesSeries = months.map(ms => calculateKPIsForMonth(ms).totalExpensesCop);
+
+      netTrendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Neto',
+              data: netSeries,
+              borderColor: '#A67E4E',
+              backgroundColor: 'rgba(166, 126, 78, 0.14)',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 4
+            },
+            {
+              label: 'Ingreso neto',
+              data: incomeSeries,
+              borderColor: 'rgba(232, 181, 74, 0.85)',
+              backgroundColor: 'rgba(232, 181, 74, 0.10)',
+              tension: 0.35,
+              fill: false,
+              pointRadius: 0
+            },
+            {
+              label: 'Gastos',
+              data: expensesSeries,
+              borderColor: 'rgba(248, 113, 113, 0.75)',
+              backgroundColor: 'rgba(248, 113, 113, 0.10)',
+              tension: 0.35,
+              fill: false,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: false } }
+        }
+      });
+    }
+
+    function updateIncomeChart(monthBookings) {
+      const ctx = document.getElementById('incomeChart').getContext('2d');
+      const buckets = [0, 0, 0, 0, 0];
+      monthBookings.forEach(b => {
+        const day = parseInt((b.checkIn || '').split('-')[2] || '1', 10);
+        const idx = Math.min(4, Math.floor((day - 1) / 7));
+        buckets[idx] += b.incomeUsd;
+      });
+      if (incomeChartInstance) incomeChartInstance.destroy();
+      incomeChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'],
+          datasets: [{
+            label: 'USD',
+            data: buckets,
+            borderColor: '#A67E4E',
+            backgroundColor: 'rgba(166, 126, 78, 0.12)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#A67E4E'
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+      });
+    }
+
+    function updateExpensesCategoryChart(monthExpenses) {
+      const ctx = document.getElementById('expensesCategoryChart').getContext('2d');
+      const categories = [...new Set(monthExpenses.map(e => e.category))];
+      const categoryTotals = categories.map(cat => monthExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + e.amountCop, 0));
+      if (expensesChartInstance) expensesChartInstance.destroy();
+      expensesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: categories.length > 0 ? categories : ['Sin datos'],
+          datasets: [{
+            label: 'COP',
+            data: categoryTotals.length > 0 ? categoryTotals : [0],
+            backgroundColor: 'rgba(168, 120, 48, 0.75)',
+            borderRadius: 6,
+            borderSkipped: false
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    function updateOccupancyChart(occupancyPct) {
+      const ctx = document.getElementById('occupancyChart').getContext('2d');
+      if (occupancyChartInstance) occupancyChartInstance.destroy();
+      occupancyChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Ocupado', 'Disponible'],
+          datasets: [{
+            data: [occupancyPct, 100 - occupancyPct],
+            backgroundColor: ['#A67E4E', 'rgba(255, 255, 255, 0.08)'],
+            borderRadius: 0
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function updateCommissionChart(commissionNicolas, utilidadCarolina) {
+      const ctx = document.getElementById('commissionChart').getContext('2d');
+      if (commissionChartInstance) commissionChartInstance.destroy();
+      const incomePct = Math.round(settings.incomeSplitNicolas * 100);
+      commissionChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Mes Actual'],
+          datasets: [
+            { label: `Nicolás (${incomePct}%)`, data: [commissionNicolas], backgroundColor: '#A67E4E', borderRadius: 6, borderSkipped: false },
+            { label: `Carolina (${100 - incomePct}%)`, data: [utilidadCarolina], backgroundColor: 'rgba(168, 120, 48, 0.55)', borderRadius: 6, borderSkipped: false }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    function downloadReportPDF() {
+      const monthStr = document.getElementById('dashMonth').value;
+      const closures = loadClosures();
+      const closure = closures?.[monthStr];
+      if (!closure) {
+        alert('Primero calcula y guarda el “Cierre del mes” en Configuración para poder generar el reporte.');
+        return;
+      }
+      const [year, month] = monthStr.split('-');
+      const monthName = new Date(year, month - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+      const kpis = calculateKPIsForMonth(monthStr);
+
+      const feesPct = (settings.airbnbFeePct + settings.hostFeePct) * 100;
+      const incomePct = Math.round(settings.incomeSplitNicolas * 100);
+      const reportHTML = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; line-height: 1.6; background: white;">
+          <h1 style="text-align: center; color: #A67E4E; margin-bottom: 8px; font-size: 32px;">REPORTE MENSUAL</h1>
+          <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 16px;">APTO URBAN 960 • ${monthName.toUpperCase()}</p>
+          
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">📊 Resumen Financiero</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Ingresos (USD)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${kpis.totalIncomeUsd.toFixed(2)}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>TRM cierre</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(closure.trm).toLocaleString('es-CO')} COP/USD</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Ingresos brutos (COP)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(closure.grossCop).toLocaleString('es-CO')}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Fees (${feesPct.toFixed(1)}%)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(closure.feesCop).toLocaleString('es-CO')}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Ingreso neto (COP)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(closure.netIncomeCop).toLocaleString('es-CO')}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Gastos (COP)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(closure.totalExpensesCop).toLocaleString('es-CO')}</td></tr>
+              <tr style="background: #e8f5e9;"><td style="padding: 10px;"><strong>Neto luego de gastos (COP)</strong></td><td style="padding: 10px; text-align: right;"><strong style="color: green;">$${Math.round(closure.netAfterExpenses).toLocaleString('es-CO')}</strong></td></tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">👥 Comisiones</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="background: #f5f5f5;"><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Nicolás (${incomePct}%)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(kpis.commissionNicolas).toLocaleString('es-CO')}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Carolina (${100 - incomePct}%)</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${Math.round(kpis.utilidadCarolina).toLocaleString('es-CO')}</td></tr>
+            </table>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">📅 Reservas (${kpis.monthBookings.length})</h2>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <thead style="background: #f5f5f5;"><tr><th style="padding: 10px; border-bottom: 2px solid #ddd;">Fecha</th><th style="padding: 10px; border-bottom: 2px solid #ddd;">Huésped</th><th style="padding: 10px; border-bottom: 2px solid #ddd;">Noches</th><th style="padding: 10px; border-bottom: 2px solid #ddd;">Ingreso</th></tr></thead>
+              <tbody>
+                ${kpis.monthBookings.length > 0 ? kpis.monthBookings.map(b => `<tr><td style="padding: 10px; border-bottom: 1px solid #ddd;">${b.checkIn}</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${b.guestName}</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${b.nights}</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">$${b.incomeUsd.toFixed(2)}</td></tr>`).join('') : '<tr><td colspan="4" style="padding: 10px; text-align: center; color: #999;">Sin reservas</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">Reporte generado: ${new Date().toLocaleString('es-CO')}</p>
+        </div>
+      `;
+
+      const opt = { margin: 10, filename: `reporte_${monthName.replace(' ', '_')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' } };
+      html2pdf().set(opt).from(reportHTML).save();
+    }
+
+    function downloadReportExcel() {
+      const monthStr = document.getElementById('dashMonth').value;
+      const closures = loadClosures();
+      const closure = closures?.[monthStr];
+      if (!closure) {
+        alert('Primero calcula y guarda el “Cierre del mes” en Configuración para poder generar el reporte.');
+        return;
+      }
+      const [year, month] = monthStr.split('-');
+      const monthName = new Date(year, month - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+      const kpis = calculateKPIsForMonth(monthStr);
+
+      const workbook = XLSX.utils.book_new();
+      const feesPct = (settings.airbnbFeePct + settings.hostFeePct) * 100;
+      const incomePct = Math.round(settings.incomeSplitNicolas * 100);
+      const summaryData = [
+        ['RESUMEN FINANCIERO - ' + monthName.toUpperCase()],
+        [],
+        ['Ingresos (USD)', kpis.totalIncomeUsd.toFixed(2)],
+        ['TRM cierre (COP/USD)', Math.round(closure.trm)],
+        ['Ingresos brutos (COP)', Math.round(closure.grossCop)],
+        ['Fees (%)', feesPct.toFixed(1)],
+        ['Fees (COP)', Math.round(closure.feesCop)],
+        ['Ingreso neto (COP)', Math.round(closure.netIncomeCop)],
+        ['Gastos (COP)', Math.round(closure.totalExpensesCop)],
+        ['Neto luego de gastos (COP)', Math.round(closure.netAfterExpenses)],
+        ['Ocupación (%)', kpis.occupancyPct.toFixed(1)],
+        [],
+        ['COMISIONES'],
+        [`Nicolás (${incomePct}%)`, Math.round(kpis.commissionNicolas)],
+        [`Carolina (${100 - incomePct}%)`, Math.round(kpis.utilidadCarolina)]
+      ];
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumen');
+
+      const bookingsData = [['Check-in', 'Check-out', 'Huésped', 'Noches', 'Ingreso (USD)'], ...kpis.monthBookings.map(b => [b.checkIn, b.checkOut, b.guestName, b.nights, b.incomeUsd.toFixed(2)])];
+      const bookingsSheet = XLSX.utils.aoa_to_sheet(bookingsData);
+      XLSX.utils.book_append_sheet(workbook, bookingsSheet, 'Reservas');
+
+      const expensesData = [['Fecha', 'Categoría', 'Monto (COP)', 'Notas'], ...kpis.monthExpenses.map(e => [e.date, e.category, e.amountCop, e.notes || ''])];
+      const expensesSheet = XLSX.utils.aoa_to_sheet(expensesData);
+      XLSX.utils.book_append_sheet(workbook, expensesSheet, 'Gastos');
+
+      XLSX.writeFile(workbook, `reporte_${monthName.replace(' ', '_')}.xlsx`);
+    }
+
+  </script>
+</body>
+</html>
