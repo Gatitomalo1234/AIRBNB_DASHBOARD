@@ -2162,7 +2162,7 @@
 	      }, { passive: true });
 
 	      function resize(){
-	        const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+	        const dpr = Math.min(1.0, window.devicePixelRatio || 1);
 	        canvas.width = Math.floor(window.innerWidth * dpr);
 	        canvas.height = Math.floor(window.innerHeight * dpr);
 	        canvas.style.width = '100%';
@@ -2214,6 +2214,7 @@
 	      updateDashboard();
 	      renderBookingsTable();
 	      updateCierreTab();
+	      if (USE_SUPABASE) syncMonthFromSupabase(dashMonth);
 	    }
 
 	    function handleBookingsMonthChange() {
@@ -2223,6 +2224,7 @@
 	      renderBookingsTable();
 	      updateDashboard();
 	      updateCierreTab();
+	      if (USE_SUPABASE) syncMonthFromSupabase(bookingsMonthVal);
 	    }
 
     function initReveals() {
@@ -2314,41 +2316,22 @@
 	      updateAuthPill(false);
 	    }
 
+	    const _loadedMonths = new Set(); // months already synced from Supabase this session
+
 	    async function hydrateFromSupabase() {
 	      try {
 	        const { data: sess } = await supabase.auth.getSession();
 	        if (!sess?.session) return;
 
-	        const [bRes, eRes, cRes, sRes] = await Promise.all([
-	          supabase.from('bookings').select('id,check_in,check_out,nights,guest_name,income_usd').order('check_in', { ascending: true }),
-	          supabase.from('expenses').select('id,date,category,amount_cop,notes').order('date', { ascending: true }),
+	        // Only load lightweight data upfront: settings + closures
+	        const [cRes, sRes] = await Promise.all([
 	          supabase.from('closures').select('*'),
 	          supabase.from('settings').select('*').eq('id', 1).maybeSingle()
 	        ]);
 
-	        if (bRes.error) throw bRes.error;
-	        if (eRes.error) throw eRes.error;
 	        if (cRes.error) throw cRes.error;
 	        if (sRes.error) throw sRes.error;
 
-	        bookings = (bRes.data || []).map(r => normalizeBooking({
-	          id: r.id,
-	          check_in: r.check_in,
-	          check_out: r.check_out,
-	          nights: r.nights,
-	          guest_name: r.guest_name,
-	          income_usd: r.income_usd
-	        })).filter(Boolean);
-
-	        expenses = (eRes.data || []).map(r => normalizeExpense({
-	          id: r.id,
-	          date: r.date,
-	          category: r.category,
-	          amount_cop: r.amount_cop,
-	          notes: r.notes
-	        })).filter(Boolean);
-
-	        // closures stored in localStorage as { [YYYY-MM]: closure }
 	        const closures = {};
 	        for (const r of (cRes.data || [])) {
 	          const key = String(r.id || r.month_str || '');
@@ -2381,7 +2364,6 @@
 	          };
 	          saveSettings();
 	        } else {
-	          // Create shared settings row (id=1) if missing
 	          await supabase.from('settings').upsert({
 	            id: 1,
 	            exchange_rate: settings.exchangeRate,
@@ -2393,55 +2375,75 @@
 	          }, { onConflict: 'id' });
 	        }
 
-	        // ── Dedup: remove duplicate bookings/expenses in Supabase ──────
-	        const _bSeen = new Map();
-	        const _eSeen = new Map();
-	        const _bDel = [], _eDel = [];
-	        for (const b of bookings) {
-	          const k = b.checkIn + '|' + b.guestName.toLowerCase();
-	          if (_bSeen.has(k)) _bDel.push(b.id); else _bSeen.set(k, b.id);
-	        }
-	        for (const e of expenses) {
-	          const k = e.date + '|' + (e.category || '').toLowerCase() + '|' + Math.round(e.amountCop);
-	          if (_eSeen.has(k)) _eDel.push(e.id); else _eSeen.set(k, e.id);
-	        }
-	        if (_bDel.length) {
-	          bookings = bookings.filter(b => !_bDel.includes(b.id));
-	          await Promise.all(_bDel.map(id => supabase.from('bookings').delete().eq('id', id)));
-	        }
-	        if (_eDel.length) {
-	          expenses = expenses.filter(e => !_eDel.includes(e.id));
-	          await Promise.all(_eDel.map(id => supabase.from('expenses').delete().eq('id', id)));
-	        }
-
-	        saveToLocalStorage(); // cache snapshot
-
-	        // ── Seed historical data once per session ────────────────────
-	        if (!_seedsApplied) {
-	          _seedsApplied = true;
-	          const _bBefore = bookings.length;
-	          const _eBefore = expenses.length;
-	          seedJanuaryExpenses(); seedJanuaryBookings();
-	          seedFebruaryExpenses(); seedFebruaryBookings();
-	          seedMarchExpenses(); seedMarchBookings();
-	          const newB = bookings.slice(_bBefore);
-	          const newE = expenses.slice(_eBefore);
-	          if (newB.length || newE.length) {
-	            saveToLocalStorage();
-	            await Promise.all([
-	              ...newB.map(b => persistBookingToSupabase(b).catch(e => console.error('booking seed:', e))),
-	              ...newE.map(e => persistExpenseToSupabase(e).catch(e => console.error('expense seed:', e))),
-	            ]);
-	          }
-	        }
-
 	        syncSettingsToUI();
+	        updateCierreTab();
+
+	        // Sync only the current month on demand
+	        const monthStr = document.getElementById('dashMonth')?.value;
+	        if (monthStr) await syncMonthFromSupabase(monthStr);
+
+	      } catch (err) {
+	        console.error(err);
+	        alert(`No pude cargar desde Supabase: ${err?.message || err}`);
+	      }
+	    }
+
+	    async function syncMonthFromSupabase(monthStr) {
+	      if (!USE_SUPABASE || !monthStr) return;
+	      if (_loadedMonths.has(monthStr)) return; // already cached this session
+	      try {
+	        const { data: sess } = await supabase.auth.getSession();
+	        if (!sess?.session) return;
+
+	        const prefix = monthStr.slice(0, 7);
+	        const [bRes, eRes] = await Promise.all([
+	          supabase.from('bookings').select('id,check_in,check_out,nights,guest_name,income_usd')
+	            .gte('check_in', `${prefix}-01`).lte('check_in', `${prefix}-31`),
+	          supabase.from('expenses').select('id,date,category,amount_cop,notes')
+	            .gte('date', `${prefix}-01`).lte('date', `${prefix}-31`)
+	        ]);
+
+	        if (bRes.error) throw bRes.error;
+	        if (eRes.error) throw eRes.error;
+
+	        const sbB = (bRes.data || []).map(r => normalizeBooking({
+	          id: r.id, check_in: r.check_in, check_out: r.check_out,
+	          nights: r.nights, guest_name: r.guest_name, income_usd: r.income_usd
+	        })).filter(Boolean);
+
+	        const sbE = (eRes.data || []).map(r => normalizeExpense({
+	          id: r.id, date: r.date, category: r.category,
+	          amount_cop: r.amount_cop, notes: r.notes
+	        })).filter(Boolean);
+
+	        // Keys already in Supabase for this month
+	        const sbBKeys = new Set(sbB.map(b => b.checkIn + '|' + b.guestName.toLowerCase()));
+	        const sbEKeys = new Set(sbE.map(e => e.date + '|' + (e.category||'').toLowerCase() + '|' + Math.round(e.amountCop)));
+
+	        // Local-only records (seeds or offline additions) → push to Supabase
+	        const localB = bookings.filter(b => b.checkIn && b.checkIn.startsWith(prefix));
+	        const localE = expenses.filter(e => e.date && e.date.startsWith(prefix));
+	        const uploadB = localB.filter(b => !sbBKeys.has(b.checkIn + '|' + b.guestName.toLowerCase()));
+	        const uploadE = localE.filter(e => !sbEKeys.has(e.date + '|' + (e.category||'').toLowerCase() + '|' + Math.round(e.amountCop)));
+
+	        if (uploadB.length || uploadE.length) {
+	          await Promise.all([
+	            ...uploadB.map(b => persistBookingToSupabase(b).catch(e => console.error('upload B:', e))),
+	            ...uploadE.map(e => persistExpenseToSupabase(e).catch(e => console.error('upload E:', e)))
+	          ]);
+	        }
+
+	        // Replace this month's local data with Supabase + local-only uploads
+	        bookings = [...bookings.filter(b => !b.checkIn || !b.checkIn.startsWith(prefix)), ...sbB, ...uploadB];
+	        expenses = [...expenses.filter(e => !e.date || !e.date.startsWith(prefix)), ...sbE, ...uploadE];
+	        saveToLocalStorage();
+	        _loadedMonths.add(monthStr);
+
 	        renderTables();
 	        updateDashboard();
 	        updateCierreTab();
 	      } catch (err) {
-	        console.error(err);
-	        alert(`No pude cargar desde Supabase: ${err?.message || err}`);
+	        console.error('syncMonth:', err);
 	      }
 	    }
 
