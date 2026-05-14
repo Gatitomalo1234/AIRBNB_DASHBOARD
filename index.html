@@ -1365,6 +1365,8 @@
       </div>
       <label class="login-label" for="loginEmail">Correo electrónico</label>
       <input type="email" id="loginEmail" class="login-input" placeholder="tu@email.com" autocomplete="email">
+      <label class="login-label" for="loginPassword" style="margin-top:14px;">Contraseña</label>
+      <input type="password" id="loginPassword" class="login-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginWithEmail()">
       <button class="login-btn" onclick="loginWithEmail()">Acceder</button>
       <p class="login-hint" id="loginHint"></p>
     </div>
@@ -2285,13 +2287,14 @@
 
 	    async function loginWithEmail() {
 	      const email = document.getElementById('loginEmail')?.value?.trim();
+	      const password = document.getElementById('loginPassword')?.value;
 	      const hint = document.getElementById('loginHint');
-	      if (!email) { if (hint) hint.textContent = 'Ingresa tu correo.'; return; }
+	      if (!email || !password) { if (hint) hint.textContent = 'Ingresa correo y contraseña.'; return; }
 	      if (!USE_SUPABASE) { if (hint) hint.textContent = getSupabaseStatusText(); return; }
-	      if (hint) hint.textContent = 'Enviando link…';
-	      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+	      if (hint) hint.textContent = 'Ingresando…';
+	      const { error } = await supabase.auth.signInWithPassword({ email, password });
 	      if (error) { if (hint) hint.textContent = `Error: ${error.message}`; return; }
-	      if (hint) hint.textContent = 'Link enviado. Revisa tu correo y abre el enlace.';
+	      if (hint) hint.textContent = '';
 	    }
 
 	    async function getSupabaseSession() {
