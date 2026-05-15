@@ -2222,12 +2222,24 @@
       obs.observe(hero);
     }
 
+	    function seedDateInputsForMonth(monthStr) {
+	      if (!monthStr) return;
+	      const first = monthStr + '-01';
+	      const ci = document.getElementById('checkIn');
+	      const co = document.getElementById('checkOut');
+	      const ed = document.getElementById('expenseDate');
+	      if (ci && !ci.value) ci.value = first;
+	      if (co && !co.value) co.value = first;
+	      if (ed && !ed.value) ed.value = first;
+	    }
+
 	    function handleDashMonthChange() {
 	      const dashMonth = document.getElementById('dashMonth').value;
 	      const bookingsMonth = document.getElementById('bookingsMonth');
 	      if (bookingsMonth && dashMonth && bookingsMonth.value !== dashMonth) bookingsMonth.value = dashMonth;
 	      _bookingsPage = 0;
 	      _expensesPage = 0;
+	      seedDateInputsForMonth(dashMonth);
 	      updateDashboard();
 	      renderBookingsTable();
 	      updateCierreTab();
@@ -2239,6 +2251,7 @@
 	      const dashMonth = document.getElementById('dashMonth');
 	      if (dashMonth && bookingsMonthVal && dashMonth.value !== bookingsMonthVal) dashMonth.value = bookingsMonthVal;
 	      _bookingsPage = 0;
+	      seedDateInputsForMonth(bookingsMonthVal);
 	      renderBookingsTable();
 	      updateDashboard();
 	      updateCierreTab();
@@ -2627,6 +2640,8 @@
       document.getElementById('checkOut').value = '';
       document.getElementById('guestName').value = '';
       document.getElementById('incomeUsd').value = '';
+      const m = document.getElementById('bookingsMonth')?.value || document.getElementById('dashMonth')?.value;
+      seedDateInputsForMonth(m);
     }
 
 	    function deleteBooking(id) {
@@ -2728,6 +2743,8 @@
 	        const c = document.getElementById('expenseCategory'); if (c) c.value = '';
 	        const a = document.getElementById('expenseAmountCop'); if (a) a.value = '';
 	        const n = document.getElementById('expenseNotes'); if (n) n.value = '';
+	        const m = document.getElementById('dashMonth')?.value;
+	        seedDateInputsForMonth(m);
 	      } catch (err) {
 	        alert(`Error agregando gasto: ${err?.message || err}`);
 	      }
