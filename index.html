@@ -3169,17 +3169,81 @@
 
 	      if (closure) {
 	        rows.push(['TRM cierre (COP/USD)', `$${Math.round(closure.trm).toLocaleString('es-CO')}`]);
-	        rows.push(['Ingresos en COP', `$${Math.round(closure.grossCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Ingresos brutos (COP)', `$${Math.round(closure.grossCop).toLocaleString('es-CO')}`]);
+	        const feesPct = (settings.airbnbFeePct + settings.hostFeePct) * 100;
+	        rows.push([`Fees (${feesPct.toFixed(1)}%)`, `$${Math.round(closure.feesCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Ingreso neto (COP)', `$${Math.round(closure.netIncomeCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Gastos (COP)', `$${Math.round(closure.totalExpensesCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(closure.netAfterExpenses).toLocaleString('es-CO')}`]);
 	        rows.push([`Nicolás (${Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.nicolas).toLocaleString('es-CO')}`]);
 	        rows.push([`Carolina (${100 - Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.carolina).toLocaleString('es-CO')}`]);
 	      } else {
 	        rows.push(['TRM', '—']);
-	        rows.push(['Ingresos en COP', '—']);
+	        rows.push(['Ingresos brutos (COP)', '—']);
+	        rows.push(['Fees', '—']);
+	        rows.push(['Ingreso neto (COP)', '—']);
 	        rows.push(['Gastos (COP)', `$${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(kpis.net).toLocaleString('es-CO')}`]);
 	      }
+
+	      rows.forEach(([k, v]) => {
+	        tbody.insertAdjacentHTML('beforeend', `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`);
+	      });
+	    }
+
+	    function updateCierreTab() {
+	      const monthStr = document.getElementById('dashMonth')?.value;
+	      const closureMonthPill = document.getElementById('closureMonthPill');
+	      const closureStatusPill = document.getElementById('closureStatusPill');
+	      const closureSummary = document.getElementById('closureSummary');
+
+	      if (monthStr && closureMonthPill) {
+	        const [y, m] = monthStr.split('-').map(Number);
+	        const label = new Date(y, m - 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' });
+	        closureMonthPill.textContent = `Mes: ${label}`;
+	      }
+
+	      const closures = loadClosures();
+	      const hasClosure = !!(monthStr && closures?.[monthStr]);
+	      if (closureStatusPill) {
+	        closureStatusPill.className = `pill ${hasClosure ? 'pill-success' : 'pill-warning'}`;
+	        closureStatusPill.textContent = hasClosure ? 'Cierre guardado' : 'Sin cierre';
+	      }
+
+	      if (monthStr && closureSummary) {
+	        const kpis = calculateKPIsForMonth(monthStr);
+	        closureSummary.textContent = `USD: $${kpis.totalIncomeUsd.toFixed(2)} • Gastos: $${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')} COP`;
+	      }
+
+	      syncSettingsToUI();
+	      renderExpensesTable();
+	      renderClosureTable();
+	      updateReportGate();
+	    }
+
+    let netTrendChartInstance, incomeChartInstance, expensesChartInstance, occupancyChartInstance, commissionChartInstance;
+
+    function updateCharts() {
+      const kpis = calculateKPIs();
+      updateNetTrendChart(kpis.monthStr);
+      updateIncomeChart(kpis.monthBookings);
+      updateExpensesCategoryChart(kpis.monthExpenses);
+      updateOccupancyChart(kpis.occupancyPct);
+      updateCommissionChart(kpis.commissionNicolas, kpis.utilidadCarolina);
+    }
+
+    function updateNetTrendChart(selectedMonthStr) {
+      const ctx = document.getElementById('netTrendChart')?.getContext('2d');
+      if (!ctx) return;
+      if (netTrendChartInstance) netTrendChartInstance.destroy();
+
+      const [y, m] = selectedMonthStr.split('-').map(Number);
+      const months = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(y, (m - 1) - i, 1);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        months.push(`${d.getFullYear()}-${mm}`);
+      }
       const labels = months.map(ms => {
         const [yy, mm] = ms.split('-').map(Number);
         return new Date(yy, mm - 1).toLocaleString('es-CO', { month: 'short' });
