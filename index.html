@@ -1477,7 +1477,7 @@
 	              </div>
 	              <div class="form-group">
 	                <label>Monto (COP)</label>
-	                <input type="number" id="expenseAmountCop" placeholder="Ej: 85000" step="1" required>
+	                <input type="text" id="expenseAmountCop" placeholder="Ej: 257.486 ó 257,486" inputmode="numeric">
 	              </div>
 	              <div class="form-group">
 	                <label>Notas (opcional)</label>
@@ -2723,7 +2723,8 @@
 	      try {
 	        const dateStr = document.getElementById('expenseDate')?.value;
 	        const category = document.getElementById('expenseCategory')?.value?.trim();
-	        const amountRaw = String(document.getElementById('expenseAmountCop')?.value || '').trim();
+	        const amountRaw = String(document.getElementById('expenseAmountCop')?.value || '').trim()
+	          .replace(/\./g, '').replace(/,/g, '');  // strip . and , thousand separators
 	        const amountCop = Math.round(Number(amountRaw));
 	        const notes = document.getElementById('expenseNotes')?.value?.trim() || '';
 
