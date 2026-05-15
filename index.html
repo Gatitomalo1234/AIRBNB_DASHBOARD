@@ -2239,6 +2239,8 @@
 	      if (bookingsMonth && dashMonth && bookingsMonth.value !== dashMonth) bookingsMonth.value = dashMonth;
 	      _bookingsPage = 0;
 	      _expensesPage = 0;
+	      const _trmInput = document.getElementById('closureTrm');
+	      if (_trmInput) _trmInput.value = '';
 	      seedDateInputsForMonth(dashMonth);
 	      updateDashboard();
 	      renderBookingsTable();
@@ -2251,6 +2253,8 @@
 	      const dashMonth = document.getElementById('dashMonth');
 	      if (dashMonth && bookingsMonthVal && dashMonth.value !== bookingsMonthVal) dashMonth.value = bookingsMonthVal;
 	      _bookingsPage = 0;
+	      const _trmInput2 = document.getElementById('closureTrm');
+	      if (_trmInput2) _trmInput2.value = '';
 	      seedDateInputsForMonth(bookingsMonthVal);
 	      renderBookingsTable();
 	      updateDashboard();
@@ -3072,7 +3076,14 @@
 	      updateCarolinaPct();
 	      const closureTrm = document.getElementById('closureTrm');
 	      const monthStr = document.getElementById('dashMonth')?.value;
-	      if (closureTrm && monthStr) closureTrm.value = String(Math.round(getExchangeRateForMonth(monthStr) || settings.exchangeRate || 0));
+	      if (closureTrm && monthStr) {
+	        const savedTrm = loadClosures()?.[monthStr]?.trm;
+	        if (savedTrm) {
+	          closureTrm.value = String(Math.round(savedTrm));
+	        } else if (!closureTrm.value) {
+	          closureTrm.value = String(Math.round(settings.exchangeRate || 0));
+	        }
+	      }
 	    }
 
 	    function updateCarolinaPct() {
