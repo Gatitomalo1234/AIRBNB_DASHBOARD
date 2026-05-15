@@ -3169,19 +3169,14 @@
 
 	      if (closure) {
 	        rows.push(['TRM cierre (COP/USD)', `$${Math.round(closure.trm).toLocaleString('es-CO')}`]);
-	        rows.push(['Ingresos brutos (COP)', `$${Math.round(closure.grossCop).toLocaleString('es-CO')}`]);
-	        const feesPct = (settings.airbnbFeePct + settings.hostFeePct) * 100;
-	        rows.push([`Fees (${feesPct.toFixed(1)}%)`, `$${Math.round(closure.feesCop).toLocaleString('es-CO')}`]);
-	        rows.push(['Ingreso neto (COP)', `$${Math.round(closure.netIncomeCop).toLocaleString('es-CO')}`]);
+	        rows.push(['Ingresos en COP', `$${Math.round(closure.grossCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Gastos (COP)', `$${Math.round(closure.totalExpensesCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(closure.netAfterExpenses).toLocaleString('es-CO')}`]);
 	        rows.push([`Nicolás (${Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.nicolas).toLocaleString('es-CO')}`]);
 	        rows.push([`Carolina (${100 - Math.round(settings.incomeSplitNicolas * 100)}%)`, `$${Math.round(closure.carolina).toLocaleString('es-CO')}`]);
 	      } else {
 	        rows.push(['TRM', '—']);
-	        rows.push(['Ingresos brutos (COP)', '—']);
-	        rows.push(['Fees', '—']);
-	        rows.push(['Ingreso neto (COP)', '—']);
+	        rows.push(['Ingresos en COP', '—']);
 	        rows.push(['Gastos (COP)', `$${Math.round(kpis.totalExpensesCop).toLocaleString('es-CO')}`]);
 	        rows.push(['Neto luego de gastos (COP)', `$${Math.round(kpis.net).toLocaleString('es-CO')}`]);
 	      }
